@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?android:attr/activatedBackgroundIndicator">
+
+    <ImageView
+        android:id="@+id/auth_icon"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_margin="10dp"
+        android:importantForAccessibility="no" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/auth_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Acme Authenticator"
+            android:textSize="20sp"
+            android:layout_marginTop="5dp"
+            tools:ignore="HardcodedText" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/auth_created_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/created_label"
+                android:layout_marginTop="5dp"
+                android:layout_marginEnd="5dp" />
+
+            <TextView
+                android:id="@+id/auth_created"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Jun 20th, 2015"
+                android:layout_marginTop="5dp"
+                tools:ignore="HardcodedText" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/auth_last_used_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/last_used_label"
+                android:layout_marginTop="5dp"
+                android:layout_marginEnd="5dp" />
+
+            <TextView
+                android:id="@+id/auth_last_used"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Jul 1st, 2015"
+                android:layout_marginTop="5dp"
+                tools:ignore="HardcodedText" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/auth_status_label"
+                android:layout_marginTop="5dp"
+                android:layout_marginEnd="5dp" />
+
+            <TextView
+                android:id="@+id/auth_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Blocked"
+                android:layout_marginTop="5dp"
+                tools:ignore="HardcodedText" />
+        </LinearLayout>
+    </LinearLayout>
+
+
+</LinearLayout>

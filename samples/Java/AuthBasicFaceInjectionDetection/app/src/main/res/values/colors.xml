@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <color name="button_background_enabled">#003E5F</color>
+    <color name="button_background_disabled">#b2c5cf</color>
+    <color name="button_background_selected">#263239</color>
+</resources>

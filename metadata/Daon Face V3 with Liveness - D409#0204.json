@@ -1,0 +1,56 @@
+{
+  "aaid": "D409#0204",
+  "assertionScheme": "UAFV1TLV",
+  "attestationTypes": [
+    15879,
+    15880
+  ],
+  "tcDisplayPNGCharacteristics": [
+    {
+      "colorType": 2,
+      "width": 320,
+      "height": 240,
+      "filter": 0,
+      "interlace": 0,
+      "bitDepth": 16,
+      "compression": 0
+    },
+    {
+      "colorType": 2,
+      "width": 640,
+      "height": 480,
+      "filter": 0,
+      "interlace": 0,
+      "bitDepth": 16,
+      "compression": 0
+    }
+  ],
+  "description": "Daon Face V3 Authenticator - Android",
+  "name": "Daon Face V3 Authenticator - Android",
+  "icon": "data:image\/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYAAACOEfKtAAAABmJLR0QA\/wD\/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AYKESA15L6NIAAABPxJREFUeNrtm1uIVVUYx39nHHXSmaVdxMIZZiwkS0ZlmhpWN7pIKXSxmz1MhgYVZBkWNZT4UvRSFEkP4UNZpInSND0IBZV2EZaaRFhQUpqllSbO4LIc89LpYf+H2UjgnnP2zNnOXj847L0OZ3+z9n+vtb9vfesbCAQCgUAgEAgEAoFAIBAIBAJ5oZCVjnjHOOA6faYB9cB44CTQDXwHbADWGstfQcB+4c4BHgDmA82n6VMR2AZ0GMvG3AvoHZOAt4BZ+uoYsBn4CvgZ6AFGAOcDbcBsYCxwAPgYeBf4yFhO5k5A72gA1gBXAb3A2\/p8bSzH\/uf3BeBmYKUEBfgHWAc8ayx78ybgcmAx4IFFwGpjKSa4bjpwPTAXuBaoAtYC843leC48l3c0e8cB7yh6x7ISbdR4x1LvOK7PgkrcS1WFNLwXOA\/YBawoxYCxHAVeBD4AqoGHvaNm2AvoHSOBG9TsMpY\/S7WlKfuGQp1WYHoeRmBD7EY3pWBvE7Bbo\/DiPAg4QaHISeDXco0pqD6g5tl5ELAmFvMdSclmkQpRCQH7Qo1qYFRKNkfo+G8eBOyRiCM1nct1SmOAc9XszoOA3bEbnZCCvUbgAp3vy4uAv+g8Da\/ZDIwBDmn9PLwFVOy2Xc2ZKZhs1XF77MEM+5XIDh2v8K70aewdY4E5am4xNgdOxDtqgXvUPAyMLsNcXczzzlFucdiPwCnA5Tp\/opw0lLHsAx4DThBlsS8Z6puproCAxVjgm0YgfSRmr5iHEbhL3rJAlGUulzbFlPuAnXnwwp4oHQ+wyDse9W7gKxLvqPKOB4El+uoTKD2zc6Z54VeVSGgAXgKmlmCjSddepNH3cpKM9rAQ0Fh2EO3CHVRy4bISzLQA4+TJFxrLN3lJJvSJ+AXwuZpzvUvu0LTBdJuam2OvhPwIKN6T55wNXDnA5dvtOu+q5LZmpQVcT7RRPgp4StUJpxt9NcCTgNGK5v1K3kBFBTSWw8BrGoW3AC8kuGwJcJ\/OXzeW\/bkVMDaN1+n80gS\/n6Z+bySqaiDXAhpLL\/C9mkk2+vt+85OxHMq9gKf0I0k2pTgAsXMj4Fk69ib4be8p1+RbQO+oAiar+XeCS\/pqA5sqUYmQKQFVpfA4cKumb5Kav41EVVkWWKZNpfwJ6B0twGqi+pbRwIdE5W1JYsc16vszQJd3XK3VyZBTGGLRxhPV+N0J3ERUwntCwXCHsexOaGci8LzW0zWa+p\/KznpjOTisBPSORqBdAXA8a\/yDRuCqgdb26d15B7CUaHOq7152ElWuvmMsP56xAmpKtQALgbuBiTEnsAHo1GjpLvPv1BFtLN0VG9Uo09OlYNsN1oZTYZDEqwM65CBq9fXvWnWsArYNRu5O1avtRPWHjbGwZwXwnLH0ZF5A75gJLAeukf1v5Rw6k77jUujDJE3vBfTnGrcCi41lS2YF9I42vX8uBH4DXgFWDsaTT9gfoxH5NFEGey9wf5r\/IlFIsbP1RInNqcAeoN1YvszCasE7WvVgpxAVY84yNp0NqDTjwIck3n495UyIp4TFNkUAezQSH8lUIC2nMU\/NN43lMzKGsWylv6B9XjklJYMxAm\/U9Diq8CSrdBJVcdUroC+btCoTZuhh7AemeseUjApYAP4g2s2boZAqEwI26diYRqeGiMlZGoGGClSHlkktgUAgEAgEAoFAIBAIBAKBQCAwAP4Di6FOP4\/AH\/IAAAAASUVORK5CYII=",
+  "tcDisplayContentType": "image\/png",
+  "upv": [
+    {
+      "major": 1,
+      "minor": 0
+    }
+  ],
+  "userVerificationDetails": [
+    [
+      {
+        "userVerification": 16
+      }
+    ]
+  ],
+  "attachmentHint": 1,
+  "tcDisplay": 15,
+  "isSecondFactorOnly": false,
+  "authenticationAlgorithm": 2,
+  "keyProtection": 15,
+  "matcherProtection": 7,
+  "attestationRootCertificates": [
+    "MIICizCCAjKgAwIBAgIJAKIFntEOQ1tXMAoGCCqGSM49BAMCMIGYMQswCQYDVQQGEwJVUzETMBEGA1UECAwKQ2FsaWZvcm5pYTEWMBQGA1UEBwwNTW91bnRhaW4gVmlldzEVMBMGA1UECgwMR29vZ2xlLCBJbmMuMRAwDgYDVQQLDAdBbmRyb2lkMTMwMQYDVQQDDCpBbmRyb2lkIEtleXN0b3JlIFNvZnR3YXJlIEF0dGVzdGF0aW9uIFJvb3QwHhcNMTYwMTExMDA0MzUwWhcNMzYwMTA2MDA0MzUwWjCBmDELMAkGA1UEBhMCVVMxEzARBgNVBAgMCkNhbGlmb3JuaWExFjAUBgNVBAcMDU1vdW50YWluIFZpZXcxFTATBgNVBAoMDEdvb2dsZSwgSW5jLjEQMA4GA1UECwwHQW5kcm9pZDEzMDEGA1UEAwwqQW5kcm9pZCBLZXlzdG9yZSBTb2Z0d2FyZSBBdHRlc3RhdGlvbiBSb290MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE7l1ex+HA220Dpn7mthvsTWpdamguD\/9\/SQ59dx9EIm29sa\/6FsvHrcV30lacqrewLVQBXT5DKyqO107sSHVBpKNjMGEwHQYDVR0OBBYEFMit6XdMRcOjzw0WEOR5QzohWjDPMB8GA1UdIwQYMBaAFMit6XdMRcOjzw0WEOR5QzohWjDPMA8GA1UdEwEB\/wQFMAMBAf8wDgYDVR0PAQH\/BAQDAgKEMAoGCCqGSM49BAMCA0cAMEQCIDUho++LNEYenNVg8x1YiSBq3KNlQfYNns6KGYxmSGB7AiBNC\/NR2TB8fVvaNTQdqEcbY6WFZTytTySn502vQX3xvw=="
+  ],
+  "publicKeyAlgAndEncoding": 257,
+  "authenticatorVersion": 1
+}

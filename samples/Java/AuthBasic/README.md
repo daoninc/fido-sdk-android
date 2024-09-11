@@ -12,18 +12,11 @@ using Java .
 
 ## Setup
 
-1. **Clone the repository:**
-
-    ```sh
-    git clone <repository-url>
-    cd AuthBasic
-    ```
-
-2. **Open the project in Android Studio:**
+1. **Open the project in Android Studio:**
 
     Open Android Studio and select `Open an existing project`. Navigate to the cloned repository and open it.
 
-3. **Build the project:**
+2. **Build the project:**
 
     Android Studio will automatically download the required dependencies and build the project.
 

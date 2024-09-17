@@ -278,7 +278,12 @@ class IntroViewModel @Inject constructor(application: Application, private val f
         viewModelScope.launch(Dispatchers.Default) {
             val bundle = Bundle()
             when (val response = fido.authenticate(bundle)) {
+
                 is Success -> {
+                    val username = response.params.getString(IXUAF.EMAIL)
+                    val editor = prefs.edit()
+                    editor.putString("currentUser", username)
+                    editor.apply()
                     _uiState.update { currentUiState ->
                         currentUiState.copy(
                             inProgress = false,

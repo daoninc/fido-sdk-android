@@ -35,14 +35,14 @@ In your project-level build.gradle file, make sure to include the Daon Maven rep
 Add the following dependencies to the build.gradle file:
 
 ```gradle
-implementation 'com.daon.sdk:fido-kt:4.8.66'
+implementation 'com.daon.sdk:fido-kt:4.8.108'
 implementation 'com.daon.sdk:fido-device:4.8.4'
 implementation 'com.daon.sdk:fido-crypto:4.8.7'
-implementation 'com.daon.sdk:fido-auth-common:4.8.66'
-implementation 'com.daon.sdk:fido-auth-authenticator:4.8.66'
+implementation 'com.daon.sdk:fido-auth-common:4.8.32'
+implementation 'com.daon.sdk:fido-auth-authenticator:4.8.32'
 
 // Face authenticator with Injection Attack Detection
-implementation 'com.daon.sdk:fido-auth-face-ifp:4.8.66'
+implementation 'com.daon.sdk:fido-auth-face-ifp:4.8.32'
 implementation 'com.daon.sdk:face:5.3.36'
 implementation 'com.daon.sdk:face-quality:3.2.103'
 implementation 'com.daon.sdk:face-capture:1.7.36'
@@ -88,16 +88,19 @@ var fido = IXUAF(context, rpsaServer)
 
 val parameters = Bundle()
 parameters.putString("com.daon.sdk.log", "true")
+parameters.putString("com.daon.sdk.ados.enabled", "true")
 
-fido.initialize(parameters)
-    .addCompleteListener { code, warnings ->
-        if (code == ErrorFactory.NO_ERROR_CODE) {
-            // Handle success
-        } else {
-            // Handle error
+viewModelScope.launch(Dispatchers.Default)  {    
+    when (val response = fido.initialize(parameters)) {
+        is Success -> {
+            // SDK is initialized            
+        }
+
+        is Failure -> {
+            // SDK failed to initialize
         }
     }
-
+}
 ```
 
 See included samples and [xAuth FIDO SDK Documentation](https://developer.identityx-cloud.com/client/fido/android/) for details and additional information.

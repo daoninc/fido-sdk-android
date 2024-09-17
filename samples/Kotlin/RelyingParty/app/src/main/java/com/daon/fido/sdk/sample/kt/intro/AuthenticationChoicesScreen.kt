@@ -1,6 +1,8 @@
-package com.daon.fido.sdk.sample.kt.authenticators
+package com.daon.fido.sdk.sample.kt.intro
 
 
+import android.graphics.BitmapFactory
+import android.util.Base64
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -13,10 +15,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.daon.fido.client.sdk.model.Authenticator
-import com.daon.fido.sdk.sample.kt.intro.IntroViewModel
 
 /**
  *
@@ -98,4 +101,14 @@ fun AuthCard(authenticator: Authenticator, onNavigateUp: () -> Unit, viewModel: 
 
         }
     }
+}
+
+// Get the ImageBitmap from the base64 encoded string
+fun getBitmap(icon: String): ImageBitmap {
+    val options = BitmapFactory.Options()
+    options.inMutable = true
+    val commaIndex = icon.indexOf(',')
+    val imageBase64 = icon.substring(commaIndex + 1)
+    val imgBytes = Base64.decode(imageBase64, Base64.DEFAULT)
+    return BitmapFactory.decodeByteArray(imgBytes, 0, imgBytes.size, options).asImageBitmap()
 }

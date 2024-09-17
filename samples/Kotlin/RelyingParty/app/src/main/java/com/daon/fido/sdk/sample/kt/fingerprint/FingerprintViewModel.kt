@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.viewModelScope
 import com.daon.fido.client.sdk.IXUAF
 import com.daon.fido.sdk.sample.kt.BaseViewModel
 import com.daon.fido.sdk.sample.kt.R
@@ -13,8 +14,10 @@ import com.daon.sdk.authenticator.controller.CaptureCompleteResult
 import com.daon.sdk.authenticator.controller.FingerprintCaptureControllerProtocol
 import com.daon.sdk.authenticator.exception.ControllerInitializationException
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -85,7 +88,7 @@ class FingerprintViewModel @Inject constructor(
             Log.e("DAON", "Error starting fingerprint capture: ${e.message}")
             _captureInfo.value = e.message ?: ""
             _captureComplete.value = true
-            fingerController.cancelCapture()
+            cancelCurrentOperation()
         }
 
     }
@@ -94,7 +97,8 @@ class FingerprintViewModel @Inject constructor(
      * Stops the fingerprint capture process.
      */
     fun onStop() {
-        fingerController.stopCapture()
+        if (::fingerController.isInitialized)
+            fingerController.stopCapture()
     }
 
     /**
@@ -119,5 +123,14 @@ class FingerprintViewModel @Inject constructor(
      */
     fun resetCaptureInfo() {
         _captureInfo.value = ""
+    }
+
+    /**
+     * Cancels the current operation.
+     */
+    fun cancelCurrentOperation() {
+        viewModelScope.launch(Dispatchers.Default) {
+            fido.cancelCurrentOperation()
+        }
     }
 }

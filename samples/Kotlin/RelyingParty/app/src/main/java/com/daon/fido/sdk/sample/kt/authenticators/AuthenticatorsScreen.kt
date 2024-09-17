@@ -31,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -53,6 +54,7 @@ import com.daon.fido.sdk.sample.kt.model.PASSCODE_AUTH_AAID
 import com.daon.fido.sdk.sample.kt.model.SILENT_AUTH_AAID
 import com.daon.fido.sdk.sample.kt.model.SRP_PASSCODE_AUTH_AAID
 import com.daon.fido.sdk.sample.kt.ui.theme.ButtonColor
+import com.daon.fido.sdk.sample.kt.util.CircularIndeterminateProgressBar
 
 /*
  * Displays a list of registered authenticators .
@@ -73,6 +75,7 @@ fun AuthenticatorsScreen(
     val context = LocalContext.current
     val state = viewModel.authState.collectAsState()
     val authToDeregister = state.value.authToDeregister
+    var inProgress by remember { mutableStateOf(false) }
 
     // Observe the state changes
     LaunchedEffect(key1 = viewModel.authState) {
@@ -122,6 +125,8 @@ fun AuthenticatorsScreen(
                 ).show()
                 viewModel.resetDeregistrationResult()
             }
+
+            inProgress = authState.inProgress
         }
     }
 
@@ -148,6 +153,7 @@ fun AuthenticatorsScreen(
                 modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween
             ) {
                 AuthenticatorList(viewModel, selectedIndex)
+                CircularIndeterminateProgressBar(isDisplayed = inProgress)
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier

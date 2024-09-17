@@ -71,8 +71,6 @@ public abstract class BaseFaceFragment extends BaseCaptureFragment implements Fa
                 }
             }
         }
-
-
     }
 
     @Override
@@ -99,6 +97,11 @@ public abstract class BaseFaceFragment extends BaseCaptureFragment implements Fa
         getController().startFaceCapture(getContext(), getViewLifecycleOwner(), previewView, new Bundle(), this, this, new DefaultCaptureCompleteListener());
     }
 
+    protected void stopFaceCapture() {
+        removePreviewImage();
+        getController().stopFaceCapture();
+    }
+
     @Override
     public void faceDetection(@NonNull Result result) {
         String message = getQualityMessage(result);
@@ -118,9 +121,11 @@ public abstract class BaseFaceFragment extends BaseCaptureFragment implements Fa
         setPreviewImage(bitmap);
 
         // retake and enroll buttons visible
-        if (doneButton != null) doneButton.setVisibility(View.VISIBLE);
+        if (doneButton != null)
+            doneButton.setVisibility(View.VISIBLE);
 
-        if (takePhotoButton != null) takePhotoButton.setVisibility(View.VISIBLE);
+        if (takePhotoButton != null)
+            takePhotoButton.setVisibility(View.VISIBLE);
     }
 
     private String getQualityMessage(Result result) {
@@ -220,16 +225,16 @@ public abstract class BaseFaceFragment extends BaseCaptureFragment implements Fa
     }
 
     protected void retakePhoto() {
-        removePreviewImage();
+        stopFaceCapture();
 
         enablePreview();
         startFaceCapture();
 
-        if (takePhotoButton != null) {
-            takePhotoButton.setVisibility(View.INVISIBLE);
-        }
+        if (takePhotoButton != null)
+            takePhotoButton.setVisibility(View.GONE);
 
-        if (doneButton != null) doneButton.setVisibility(View.GONE);
+        if (doneButton != null)
+            doneButton.setVisibility(View.GONE);
     }
 
     protected void retakePhotoDelayed() {

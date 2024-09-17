@@ -1,17 +1,17 @@
 [versions]
 
-fido = "4.8.87"
-fido-kt = "4.8.87"
-fido-service = "4.8.87"
+fido = "4.8.108"
+fido-kt = "4.8.108"
+fido-service = "4.8.108"
 
 fido-device = "4.8.4"
 fido-crypto = "4.8.7"
 
-fido-auth-common = "4.8.31"
-fido-auth-authenticator = "4.8.31"
-fido-auth-face = "4.8.31"
-fido-auth-face-ifp = "4.8.31"
-fido-auth-voice = "4.8.31"
+fido-auth-common = "4.8.32"
+fido-auth-authenticator = "4.8.32"
+fido-auth-face = "4.8.32"
+fido-auth-face-ifp = "4.8.32"
+fido-auth-voice = "4.8.32"
 
 face = "5.3.36"
 face-matcher = "1.3.2"

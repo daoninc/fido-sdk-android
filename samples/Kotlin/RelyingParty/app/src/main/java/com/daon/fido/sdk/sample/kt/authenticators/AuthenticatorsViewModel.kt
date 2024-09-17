@@ -36,7 +36,8 @@ data class AuthenticatorState(
     val authToDeregister: Authenticator?,
     val selectedIndex: Int,
     val registrationResult: RegistrationResult?,
-    val deregistrationResult: DeregistrationResult?
+    val deregistrationResult: DeregistrationResult?,
+    val inProgress: Boolean
 )
 
 // Data classes to hold the result of registration.
@@ -68,7 +69,8 @@ class AuthenticatorsViewModel @Inject constructor(
             authToDeregister = null,
             selectedIndex = -1,
             registrationResult = null,
-            deregistrationResult = null
+            deregistrationResult = null,
+            inProgress = false
         )
     )
     val authState: StateFlow<AuthenticatorState> = _authState
@@ -146,6 +148,9 @@ class AuthenticatorsViewModel @Inject constructor(
 
     // Register the selected authenticator.
     fun register() {
+        _authState.update { currentAuthState ->
+            currentAuthState.copy(inProgress = true)
+        }
         viewModelScope.launch(Dispatchers.Default) {
             val bundle = Bundle()
             val username = prefs.getString("currentUser", null)
@@ -163,6 +168,7 @@ class AuthenticatorsViewModel @Inject constructor(
                     Log.d("DAON", "fido register success")
                     _authState.update { currentAuthState ->
                         currentAuthState.copy(
+                            inProgress = false,
                             registrationResult = RegistrationResult(
                                 success = true, message = "Registration success"
                             )
@@ -179,6 +185,7 @@ class AuthenticatorsViewModel @Inject constructor(
                     }
                     _authState.update { currentAuthState ->
                         currentAuthState.copy(
+                            inProgress = false,
                             registrationResult = RegistrationResult(
                                 success = false, message = "Reason for registration failure is: ${
                                     response.params.getString(
@@ -204,6 +211,9 @@ class AuthenticatorsViewModel @Inject constructor(
 
     // Unlock and remove the selected authenticator.
     fun remove(auth: Authenticator) {
+        _authState.update { currentAuthState ->
+            currentAuthState.copy(inProgress = true)
+        }
         viewModelScope.launch(Dispatchers.Default) {
             val username = prefs.getString("currentUser", null).toString()
 
@@ -214,6 +224,7 @@ class AuthenticatorsViewModel @Inject constructor(
                     Log.d("DAON", "fido remove success")
                     _authState.update { currentAuthState ->
                         currentAuthState.copy(
+                            inProgress = false,
                             deregistrationResult = DeregistrationResult(
                                 success = true,
                                 message = "Remove authenticator ${auth.aaid} success"
@@ -229,6 +240,7 @@ class AuthenticatorsViewModel @Inject constructor(
                     updateAuthToDeregister(null, -1)
                     _authState.update { currentAuthState ->
                         currentAuthState.copy(
+                            inProgress = false,
                             deregistrationResult = DeregistrationResult(
                                 success = false,
                                 message = "Reason for remove authenticator failure is: ${
@@ -246,6 +258,9 @@ class AuthenticatorsViewModel @Inject constructor(
 
     // Deregister the selected authenticator.
     fun deregister(auth: Authenticator) {
+        _authState.update { currentAuthState ->
+            currentAuthState.copy(inProgress = true)
+        }
         viewModelScope.launch(Dispatchers.Default) {
             val username = prefs.getString("currentUser", null).toString()
 
@@ -256,6 +271,7 @@ class AuthenticatorsViewModel @Inject constructor(
                     updateAuthToDeregister(null, -1)
                     _authState.update { currentAuthState ->
                         currentAuthState.copy(
+                            inProgress = false,
                             deregistrationResult = DeregistrationResult(
                                 success = true, message = "Deregistration success"
                             )
@@ -270,6 +286,7 @@ class AuthenticatorsViewModel @Inject constructor(
                     Log.d("DAON", "fido deregister failure")
                     _authState.update { currentAuthState ->
                         currentAuthState.copy(
+                            inProgress = false,
                             deregistrationResult = DeregistrationResult(
                                 success = false, message = "Reason for deregistration failure is: ${
                                     response.params.getString(

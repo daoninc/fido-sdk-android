@@ -23,6 +23,7 @@ import android.provider.Settings;
 import android.util.Log;
 
 import com.daon.fido.client.sdk.ErrorInfo;
+import com.daon.fido.client.sdk.Fido;
 import com.daon.fido.client.sdk.IXUAFCommService;
 import com.daon.fido.client.sdk.IXUAFCommServiceListener;
 import com.daon.fido.client.sdk.ServerCommResult;
@@ -143,7 +144,7 @@ public class RPSAService implements IXUAFCommService, AuthRequestListener, Regis
 
     @Override
     public void serviceRequestDeregistration(String authenticatorId, IXUAFCommServiceListener commServiceListener) {
-        String deviceId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+        String deviceId = Fido.getInstance(context).getDeviceInfo().getDeviceId();
         DeregisterAuthenticatorTask deregisterAuthenticatorTask = new DeregisterAuthenticatorTask(http, commServiceListener, authenticatorId, deviceId);
         deregisterAuthenticatorTask.execute();
     }
@@ -183,8 +184,8 @@ public class RPSAService implements IXUAFCommService, AuthRequestListener, Regis
     }
 
     public void deleteSession() {
-        http.deleteResource(SERVER_RESOURCE_SESSIONS, sessionId, false);
         sessionId = null;
+        http.deleteResource(SERVER_RESOURCE_SESSIONS, sessionId, false);
     }
 
     public DeleteAccountResponse deleteAccount() {

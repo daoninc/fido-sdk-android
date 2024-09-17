@@ -36,6 +36,8 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.ViewModel
+import com.daon.fido.sdk.sample.kt.intro.IntroViewModel
 import com.daon.fido.sdk.sample.kt.ui.theme.ButtonColor
 import com.daon.fido.sdk.sample.kt.util.LockScreenOrientation
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -49,16 +51,31 @@ import com.google.accompanist.permissions.rememberPermissionState
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun FaceScreen(
-    onNavigateUp: () -> Unit
+    onNavigateUp: () -> Unit,
+    introViewModel: IntroViewModel? = null,
+    onNavigateToAccounts: (() -> Unit, ViewModel) -> Unit
 ) {
 
-    val viewModel = hiltViewModel<IDLiveFaceViewModel>()
+    val viewModel = hiltViewModel<FaceViewModel>()
     val uiState by viewModel.faceUIState.collectAsState()
     val captureState by viewModel.faceCaptureState.collectAsState()
 
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val previewView = remember { PreviewView(context) }
+
+    introViewModel?.let {
+        LaunchedEffect(key1 = it.uiState) {
+            it.uiState.collect { uiState ->
+                if (uiState.accountListAvailable) {
+                    onNavigateToAccounts(onNavigateUp, it)
+                }
+                if (uiState.accountSelected) {
+                    it.submitSelectedAccount()
+                }
+            }
+        }
+    }
 
     val permissionState = rememberPermissionState(permission = Manifest.permission.CAMERA)
     // Handle lifecycle events to request camera permission

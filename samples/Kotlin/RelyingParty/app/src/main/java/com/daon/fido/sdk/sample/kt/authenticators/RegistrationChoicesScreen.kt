@@ -1,4 +1,4 @@
-package com.daon.fido.sdk.sample.kt.transaction
+package com.daon.fido.sdk.sample.kt.authenticators
 
 
 import androidx.activity.compose.BackHandler
@@ -16,8 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.daon.fido.client.sdk.model.Authenticator
-import com.daon.fido.sdk.sample.kt.authenticators.AuthenticatorsViewModel
-import com.daon.fido.sdk.sample.kt.authenticators.getBitmap
 
 /**
  *

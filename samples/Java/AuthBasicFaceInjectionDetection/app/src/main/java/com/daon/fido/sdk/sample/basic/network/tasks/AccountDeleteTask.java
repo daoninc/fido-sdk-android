@@ -16,11 +16,13 @@ import com.daon.fido.sdk.sample.basic.network.exception.ServerError;
 public class AccountDeleteTask extends TaskExecutor<ServerOperationResult<DeleteAccountResponse>> {
 
     private final Context applicationContext;
+    private final String username;
     private final AccountDeleteResultListener listener;
 
-    public AccountDeleteTask(Context context, AccountDeleteResultListener listener) {
+    public AccountDeleteTask(Context context, String username, AccountDeleteResultListener listener) {
 
         this.applicationContext = context;
+        this.username = username;
         this.listener = listener;
     }
 
@@ -40,7 +42,7 @@ public class AccountDeleteTask extends TaskExecutor<ServerOperationResult<Delete
     @Override
     protected void onPostExecute(ServerOperationResult<DeleteAccountResponse> response) {
         if (response.isSuccessful()) {
-            Fido.getInstance(applicationContext).reset(new IXUAFDeregisterEventListener() {
+            Fido.getInstance(applicationContext).reset(null, username, new IXUAFDeregisterEventListener() {
                 @Override
                 public void onDeregistrationComplete() {
                     listener.onDeregisterComplete();

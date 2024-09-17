@@ -10,7 +10,6 @@ import com.daon.fido.sdk.sample.basic.network.exception.ServerError;
 
 public class UserLogoutTask extends TaskExecutor<ServerOperationResult<Boolean>> {
 
-
     private final Context context;
 
     public UserLogoutTask(Context context) {
@@ -35,6 +34,5 @@ public class UserLogoutTask extends TaskExecutor<ServerOperationResult<Boolean>>
 
     @Override
     protected void onPostExecute(ServerOperationResult<Boolean> response) {
-        response.isSuccessful();
     }
 }

@@ -34,6 +34,5 @@ public class UserLogoutTask extends TaskExecutor<ServerOperationResult<Boolean>>
 
     @Override
     protected void onPostExecute(ServerOperationResult<Boolean> response) {
-        response.isSuccessful();
     }
 }

@@ -153,8 +153,9 @@ class HomeViewModel @Inject constructor(application: Application, private val fi
 
     // Remove all Fido SDK data from the device
     private fun reset() {
+        val username = prefs.getString("currentUser", null)
         viewModelScope.launch {
-            when (fido.reset()) {
+            when (fido.reset(null, username)) {
                 is Success -> {
                     Log.d("DAON", "Reset Fido Success")
                     _transactionState.update { currentTransactionState ->

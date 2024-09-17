@@ -57,7 +57,7 @@ data class FaceCaptureCompleteState(
 * @param prefs The SharedPreferences instance.
 */
 @HiltViewModel
-class IDLiveFaceViewModel @Inject constructor(
+class FaceViewModel @Inject constructor(
     application: Application,
     private val fido: IXUAF,
     private val prefs: SharedPreferences

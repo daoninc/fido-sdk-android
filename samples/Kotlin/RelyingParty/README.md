@@ -73,7 +73,7 @@ and the RPSA/REST server instance.
  ```kotlin
     val fidoHolder = FidoHolder.getInstance(context)
     val fido = fidoHolder.fido
-    ```
+ ```
    
 ## License
 The FIDO SDK requires a license that is bound to an application identifier. This license may in 

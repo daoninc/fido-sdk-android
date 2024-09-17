@@ -63,6 +63,7 @@
                 android:layout_marginTop="16dp"
                 android:background="@drawable/standard_button"
                 android:focusable="true"
+                android:visibility="gone"
                 android:text="@string/action_login_with_fido" />
 
 
@@ -73,7 +74,18 @@
                 android:layout_marginTop="16dp"
                 android:background="@drawable/standard_button"
                 android:focusable="true"
+                android:visibility="gone"
                 android:text="@string/action_new_account" />
+
+            <Button
+                android:id="@+id/resetButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/standard_button"
+                android:focusable="true"
+                android:visibility="gone"
+                android:text="@string/action_reset" />
 
         </LinearLayout>
     </ScrollView>

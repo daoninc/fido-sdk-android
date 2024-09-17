@@ -28,20 +28,23 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.daon.fido.client.sdk.AuthenticationEventListener;
 import com.daon.fido.client.sdk.Fido;
 import com.daon.fido.client.sdk.IXUAF;
 import com.daon.fido.client.sdk.IXUAFCommService;
+import com.daon.fido.client.sdk.IXUAFDeregisterEventListener;
 import com.daon.fido.client.sdk.IXUAFInitialiseListener;
 import com.daon.fido.client.sdk.core.Error;
 import com.daon.fido.client.sdk.model.AccountInfo;
 import com.daon.fido.client.sdk.model.Authenticator;
+import com.daon.fido.client.sdk.state.Keys;
+import com.daon.fido.sdk.sample.basic.CustomApplication;
 import com.daon.fido.sdk.sample.basic.CustomCaptureFragmentFactory;
 import com.daon.fido.sdk.sample.basic.databinding.ActivityIntroBinding;
 import com.daon.fido.sdk.sample.basic.model.AuthenticationMethod;
-import com.daon.fido.sdk.sample.basic.network.tasks.AccountDeleteTask;
 import com.daon.fido.sdk.sample.basic.network.tasks.UserSignupTask;
 import com.daon.fido.sdk.sample.basic.permission.PermissionHelper;
 import com.daon.fido.sdk.sample.basic.preferences.SharedPreferencesManager;
@@ -58,10 +61,12 @@ import java.util.List;
 /**
  * @noinspection SpellCheckingInspection
  */
-public class IntroActivity extends AppCompatActivity implements AccountDeleteTask.AccountDeleteResultListener, UserSignupTask.UserSignupResultListener {
+public class IntroActivity extends AppCompatActivity implements UserSignupTask.UserSignupResultListener {
+    private static final String TAG = IntroActivity.class.getSimpleName();
     private PermissionHelper permissionHelper;
     private SharedPreferencesManager sharedPreferencesManager;
     private ActivityIntroBinding viewBinding;
+    private IXUAF fido;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,14 +79,74 @@ public class IntroActivity extends AppCompatActivity implements AccountDeleteTas
         permissionHelper = new PermissionHelper(this, this::processGrantedPermissions);
         checkPermissions();
 
-        viewBinding.newAccountButton.setOnClickListener(view -> {
-            // Here deleting any previous accounts if created any for the simplicity of the app.
-            showProgress(true);
-            new AccountDeleteTask(this, this).execute();
-        });
         viewBinding.loginFidoButton.setOnClickListener(view -> attemptFIDOLogin());
+        viewBinding.newAccountButton.setOnClickListener(view -> signup());
+        viewBinding.resetButton.setOnClickListener(view->reset());
+
         viewBinding.faceOnly.setOnCheckedChangeListener((compoundButton, isChecked) -> sharedPreferencesManager.storeBooleanData(this, SHARED_PREF_IS_FACE_ONLY, isChecked));
         viewBinding.faceOnly.setChecked(true);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        initialize();
+    }
+
+    private void initialize() {
+        fido = Fido.getInstance(getApplicationContext());
+        IXUAFCommService communicationService = RPSAService.getInstance(getApplicationContext());
+        Bundle parameters = new Bundle();
+        parameters.putString("com.daon.sdk.log", "true");
+        parameters.putString("com.daon.sdk.ignoreNativeClients", "true");
+        parameters.putString("com.daon.sdk.ados.enabled", "true");
+
+        showProgress(true);
+
+        fido.initWithService(parameters, new CustomCaptureFragmentFactory(), communicationService, new IXUAFInitialiseListener() {
+            @Override
+            public void onInitialiseComplete() {
+                showProgress(false);
+
+                viewBinding.loginFidoButton.setVisibility(View.VISIBLE);
+                viewBinding.newAccountButton.setVisibility(View.VISIBLE);
+                viewBinding.resetButton.setVisibility(View.VISIBLE);
+
+                // Only allow one account per device.
+//                if (hasKeys()) {
+//                    viewBinding.newAccountButton.setVisibility(View.GONE);
+//                    viewBinding.resetButton.setVisibility(View.VISIBLE);
+//                } else {
+//                    viewBinding.newAccountButton.setVisibility(View.VISIBLE);
+//                    viewBinding.resetButton.setVisibility(View.GONE);
+//                }
+            }
+
+            @Override
+            public void onInitialiseFailed(int code, String message) {
+                showProgress(false);
+                Toast.makeText(getApplicationContext(), "Initialize failed", Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onInitialiseWarnings(List<Error> list) {
+                Log.d(TAG, "onInitialiseWarnings");
+                for (Error warning : list) {
+                    Log.d(TAG, "warning :" + warning.getMessage());
+                }
+            }
+        });
+    }
+
+    private boolean hasKeys() {
+        try {
+            Keys keys = fido.getKeys(null);
+            return keys.size() > 0;
+        } catch (Exception e) {
+            //
+        }
+        return false;
     }
 
     private void checkPermissions() {
@@ -110,36 +175,6 @@ public class IntroActivity extends AppCompatActivity implements AccountDeleteTas
         }
     }
 
-    public void reinitializeSdk() {
-        IXUAF fido = Fido.getInstance(getApplicationContext());
-        IXUAFCommService rpsa = RPSAService.getInstance(getApplicationContext());
-        Bundle parameters = new Bundle();
-        parameters.putString("com.daon.sdk.log", "true");
-        parameters.putString("com.daon.sdk.ignoreNativeClients", "true");
-
-        parameters.putString("com.daon.sdk.ados.enabled", "true");
-        parameters.putString("com.daon.face.liveness.active.type", "none");
-        parameters.putString("com.daon.face.liveness.passive.type", "server");
-
-        fido.initWithService(parameters, new CustomCaptureFragmentFactory(), rpsa, new IXUAFInitialiseListener() {
-            @Override
-            public void onInitialiseComplete() {
-                new UserSignupTask(IntroActivity.this, IntroActivity.this).execute();
-            }
-
-            @Override
-            public void onInitialiseFailed(int i, String s) {
-                Log.d("DAON", "onInitialiseFailed");
-                showProgress(false);
-            }
-
-            @Override
-            public void onInitialiseWarnings(List<Error> list) {
-
-            }
-        });
-    }
-
     private void createAuthChoicesAlertDialog(Authenticator[][] authenticators) {
         AlertDialog.Builder builderSingle = new AlertDialog.Builder(IntroActivity.this);
         builderSingle.setTitle("Select authenticator:-");
@@ -160,9 +195,31 @@ public class IntroActivity extends AppCompatActivity implements AccountDeleteTas
         builderSingle.show();
     }
 
+    private void signup() {
+        showProgress(true);
+        new UserSignupTask(IntroActivity.this, IntroActivity.this).execute();
+    }
+
+    private void reset() {
+        showProgress(true);
+        fido.reset(new IXUAFDeregisterEventListener() {
+            @Override
+            public void onDeregistrationComplete() {
+                showProgress(false);
+                Toast.makeText(getApplicationContext(), "Reset complete", Toast.LENGTH_SHORT).show();
+                initialize();
+            }
+
+            @Override
+            public void onDeregistrationFailed(int code, String message) {
+                showProgress(false);
+                Toast.makeText(getApplicationContext(), "Reset failed", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
     private void attemptFIDOLogin() {
         showProgress(true);
-        Fido.getInstance(getApplicationContext()).authenticate(null, new AuthenticationEventListener() {
+        fido.authenticate(null, new AuthenticationEventListener() {
             @Override
             public void onAuthListAvailable(Authenticator[][] authenticators) {
                 if (authenticators.length == 1) {
@@ -202,8 +259,14 @@ public class IntroActivity extends AppCompatActivity implements AccountDeleteTas
         Bundle bundle = new Bundle();
         bundle.putSerializable("accounts", accounts);
 
+        // NOTE!
+        // Get current activity. If this is an ADOS authentication, the current activity is the ADOS Capture Activity,
+        // since the authenticator is still active. For non-ADOS authentications, the current activity is the IntroActivity.
+        CustomApplication app = (CustomApplication) getApplication();
+        FragmentActivity currentActivity = (FragmentActivity) app.getCurrentActivity();
+
         ChooseAccountDialogFragment chooseAccountDialogFragment = getChooseAccountDialogFragment(accountInfos, bundle);
-        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        FragmentTransaction ft = currentActivity.getSupportFragmentManager().beginTransaction();
         ft.add(chooseAccountDialogFragment, "ChooseAccount_tag");
         ft.commitAllowingStateLoss();
     }
@@ -239,17 +302,6 @@ public class IntroActivity extends AppCompatActivity implements AccountDeleteTas
                 viewBinding.introProgress.setVisibility(show ? View.VISIBLE : View.GONE);
             }
         });
-    }
-
-    @Override
-    public void onDeregisterComplete() {
-        reinitializeSdk();
-    }
-
-    @Override
-    public void onDeregisterFailed(String errorMessage) {
-        runOnUiThread(() -> Toast.makeText(this, "Reset failed: " + errorMessage, Toast.LENGTH_LONG).show());
-        reinitializeSdk();
     }
 
     private void showLoggedIn(CreateSessionResponse response) {

@@ -11,6 +11,7 @@ import com.daon.fido.client.sdk.Failure
 import com.daon.fido.client.sdk.IXUAF
 import com.daon.fido.client.sdk.Success
 import com.daon.fido.client.sdk.core.ErrorFactory
+import com.daon.fido.client.sdk.model.AccountInfo
 import com.daon.fido.client.sdk.model.Authenticator
 import com.daon.fido.sdk.sample.kt.BaseViewModel
 import com.daon.fido.sdk.sample.kt.model.SILENT_AUTH_AAID
@@ -41,7 +42,11 @@ data class FidoUiState(
     val authSelected: Boolean,
     val selectedAuth: Authenticator?,
     val loginResult: LoginResult? = null,
-    val username: String? = null
+    val username: String? = null,
+    val accountArray: Array<AccountInfo>,
+    val accountListAvailable: Boolean,
+    val accountSelected: Boolean,
+    val selectedAccount: AccountInfo?
 )
 
 // Data class representing the result of an account creation operation
@@ -80,7 +85,12 @@ class IntroViewModel @Inject constructor(application: Application, private val f
             authArray = emptyArray<Authenticator>(),
             authSelected = false,
             selectedAuth = null,
-            username = null)
+            username = null,
+            accountArray = emptyArray<AccountInfo>(),
+            accountListAvailable = false,
+            accountSelected = false,
+            selectedAccount = null
+            )
     )
 
     // State flow for the UI state
@@ -98,47 +108,56 @@ class IntroViewModel @Inject constructor(application: Application, private val f
             _uiState.update { currentUiState ->
                 currentUiState.copy(inProgress = true)
             }
-            val parameters = Bundle()
-            parameters.putString("com.daon.sdk.ignoreNativeClients", "true")
-            parameters.putString("com.daon.sdk.ados.enabled", "true")
-            //Enabling ADoS SRP Passcode
-            parameters.putString("com.daon.sdk.passcode.ados.version", "2")
-            fido.initialize(parameters)
-                .addCompleteListener { code, warnings ->
-                    _uiState.update { currentUiState ->
-                        currentUiState.copy(
-                            inProgress = false)
-                    }
-                    if (code == ErrorFactory.NO_ERROR_CODE) {
-                        if (warnings.isNotEmpty()) {
-                            warnings.forEach {
-                                Log.d("DAON", "warning - ${it.code} : ${it.message}")
-                            }
-                        }
+            viewModelScope.launch(Dispatchers.Default)  {
+                val parameters = Bundle().apply {
+                    putString("com.daon.sdk.ignoreNativeClients", "true")
+                    putString("com.daon.sdk.ados.enabled", "true")
+                    //Enabling ADoS SRP Passcode
+                    putString("com.daon.sdk.passcode.ados.version", "2")
+                }
+
+                when (val response = fido.initialize(parameters)) {
+                    is Success -> {
                         _uiState.update { currentUiState ->
                             currentUiState.copy(
+                                inProgress = false,
                                 initializationResult = FidoInitializationResult(
                                     success = true,
                                     message = "Fido init done"
                                 )
                             )
                         }
-                    } else {
+                        response.params.getIntArray("warnings")?.forEach {
+                            Log.d("DAON", "warning - $it")
+                        }
+
+                    }
+
+                    is Failure -> {
                         _uiState.update { currentUiState ->
                             currentUiState.copy(
+                                inProgress = false,
                                 initializationResult = FidoInitializationResult(
                                     success = true,
-                                    message = "Fido init failes with error code $code"
-                                )
-                            )
+                                    message = "Fido init failes with error code ${response.params.getInt(IXUAF.ERROR_CODE)}"
+                                ))
                         }
+                        Log.d("DAON", "initFido failure ${response.params.getInt(IXUAF.ERROR_CODE)} : ${response.params.getString(IXUAF.ERROR_MESSAGE)}")
                     }
                 }
+            }
         }
 
         fido.addChooseAuthenticatorListener {
             _uiState.update { currentUiState ->
                 currentUiState.copy(authArrayAvailable = true, authArray = it)
+            }
+        }
+
+        fido.addAccountListListener{
+            Log.d("DAON", "addAccountListListener : $it")
+            _uiState.update { currentUiState ->
+                currentUiState.copy(accountListAvailable = true, accountArray = it)
             }
         }
     }
@@ -179,56 +198,6 @@ class IntroViewModel @Inject constructor(application: Application, private val f
 
     }
 
-    // Create a new account
-    fun createAccount() {
-        resetFido()
-    }
-
-    // Reset FIDO before creating a new account
-    private fun resetFido() {
-        viewModelScope.launch {
-            when (fido.reset()) {
-                is Success -> {
-                    prefs.edit().putString("currentUser", null).apply()
-                    reinitializeFido()
-                }
-
-                is Failure -> {
-                    prefs.edit().putString("currentUser", null).apply()
-                    reinitializeFido()
-                }
-            }
-        }
-
-    }
-
-    // Reinitialize FIDO after reset
-    private fun reinitializeFido() {
-        viewModelScope.launch {
-            val parameters = Bundle()
-            parameters.putString("com.daon.sdk.log", "true")
-            parameters.putString("com.daon.sdk.ignoreNativeClients", "true")
-            parameters.putString("com.daon.sdk.ados.enabled", "true")
-            //Enabling ADoS SRP Passcode
-            parameters.putString("com.daon.sdk.passcode.ados.version", "2")
-            fido.initialize(parameters)
-                .addCompleteListener { code, _ ->
-                    if (code == ErrorFactory.NO_ERROR_CODE) {
-                        createNewAccount()
-                    } else {
-                        _uiState.update { currentUiState ->
-                            currentUiState.copy(
-                                initializationResult = FidoInitializationResult(
-                                    success = true,
-                                    message = "Fido init failes with error code $code"
-                                )
-                            )
-                        }
-                    }
-                }
-        }
-    }
-
     // Start GPS locator
     fun startGps() {
         fido.startLocator(null)
@@ -248,7 +217,7 @@ class IntroViewModel @Inject constructor(application: Application, private val f
     }
 
     // Create a new account with generated email
-    private fun createNewAccount() {
+     fun createAccount() {
         val usr = generateEmail()
         Log.d("DAON", "createNewAccount usr - $usr")
         _uiState.update { currentUiState ->
@@ -308,10 +277,6 @@ class IntroViewModel @Inject constructor(application: Application, private val f
         }
         viewModelScope.launch(Dispatchers.Default) {
             val bundle = Bundle()
-            val username = prefs.getString("currentUser", null)
-            if (username != null) {
-                bundle.putString(IXUAF.USERNAME, username)
-            }
             when (val response = fido.authenticate(bundle)) {
                 is Success -> {
                     _uiState.update { currentUiState ->
@@ -379,6 +344,26 @@ class IntroViewModel @Inject constructor(application: Application, private val f
         }
         prefs.edit {
             this.putString("selectedAaid", auth.aaid)
+        }
+    }
+
+    // Update the selected authenticator
+    fun updateSelectedAccount(account: AccountInfo) {
+        _uiState.update { currentAuthState ->
+            currentAuthState.copy(selectedAccount = account, accountSelected = true, accountListAvailable = false, accountArray = emptyArray<AccountInfo>())
+        }
+    }
+
+    fun resetAccountListAvailable() {
+        _uiState.update { currentAuthState ->
+            currentAuthState.copy(accountListAvailable = false, accountArray = emptyArray<AccountInfo>())
+        }
+    }
+
+    fun submitSelectedAccount() {
+        uiState.value.selectedAccount?.let { fido.submitUserSelectedAccount(it) }
+        _uiState.update { currentUiState ->
+            currentUiState.copy(accountSelected = false)
         }
     }
 

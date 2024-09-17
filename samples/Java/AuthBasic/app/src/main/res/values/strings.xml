@@ -33,6 +33,7 @@
     <string name="home_last_logged_in_date">April 27, 2022</string>
     <string name="action_manage_authenticators">Authenticators</string>
     <string name="action_reset">Reset</string>
+    <string name="action_delete">Delete</string>
     <string name="dialog_logout_confirmation_yes">Yes</string>
     <string name="dialog_logout_confirmation_no">No</string>
     <string name="authenticators_title_bar">FIDO Authenticators</string>

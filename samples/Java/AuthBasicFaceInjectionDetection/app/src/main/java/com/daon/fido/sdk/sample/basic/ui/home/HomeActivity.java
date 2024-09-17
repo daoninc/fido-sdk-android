@@ -72,7 +72,7 @@ public class HomeActivity extends AppCompatActivity implements AccountDeleteTask
             startActivity(newIntent);
         });
 
-        viewBinding.resetButton.setOnClickListener(view -> reset());
+        viewBinding.deleteButton.setOnClickListener(view -> deleteAccount());
 
         // Set the info fields on the screen
         viewBinding.textViewUser.setText(sharedPreferencesManager.getStringData(this, SharedPreferencesManager.SHARED_PREF_EMAIL));
@@ -195,14 +195,16 @@ public class HomeActivity extends AppCompatActivity implements AccountDeleteTask
         Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show();
     }
 
-    private void reset() {
+    private void deleteAccount() {
         showProgress(true);
+
+        String email = sharedPreferencesManager.getStringData(this, SharedPreferencesManager.SHARED_PREF_EMAIL);
+
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setTitle("Reset");
         alertDialogBuilder.setMessage("Are you sure?");
-        alertDialogBuilder.setPositiveButton(R.string.dialog_logout_confirmation_yes, (arg0, arg1) -> new AccountDeleteTask(getApplicationContext(), this).execute());
-        alertDialogBuilder.setNegativeButton(R.string.dialog_logout_confirmation_no, (dialog, which) -> {
-        });
+        alertDialogBuilder.setPositiveButton(R.string.dialog_logout_confirmation_yes, (arg0, arg1) -> new AccountDeleteTask(getApplicationContext(), email, this).execute());
+        alertDialogBuilder.setNegativeButton(R.string.dialog_logout_confirmation_no, (dialog, which) -> {});
         AlertDialog alertDialog = alertDialogBuilder.create();
         alertDialog.show();
     }

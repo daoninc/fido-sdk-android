@@ -2,7 +2,7 @@
     <string name="app_name">RelyingParty</string>
     <string name="action_step_up_auth">Step-up Auth</string>
     <string name="action_manage_authenticators">Authenticators</string>
-    <string name="action_reset">Reset</string>
+    <string name="action_delete">Delete</string>
     <string name="transaction_validation_success">Transaction validated successfully</string>
     <string name="transaction_text_content">Pay $50 to acme.com</string>
     <string name="user_lock_warning">One attempt remaining until user account is blocked</string>

@@ -49,9 +49,11 @@ public class RegisterFaceFragment extends BaseFaceFragment {
     private void enroll() {
         showMessage(R.string.face_enroll);
 
-        if (doneButton != null) doneButton.setVisibility(View.GONE);
+        if (doneButton != null)
+            doneButton.setVisibility(View.GONE);
 
-        if (takePhotoButton != null) takePhotoButton.setVisibility(View.INVISIBLE);
+        if (takePhotoButton != null)
+            takePhotoButton.setVisibility(View.GONE);
 
         if (getController() != null) {
             onAuthenticateWait(true);

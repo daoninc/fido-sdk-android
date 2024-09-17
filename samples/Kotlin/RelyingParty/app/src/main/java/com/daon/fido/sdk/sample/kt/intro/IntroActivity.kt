@@ -15,11 +15,10 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
-import com.daon.fido.sdk.sample.kt.authenticators.AuthenticationChoicesScreen
 import com.daon.fido.sdk.sample.kt.authenticators.AuthenticatorsScreen
 import com.daon.fido.sdk.sample.kt.authenticators.AuthenticatorsViewModel
 import com.daon.fido.sdk.sample.kt.util.FidoAppState
-import com.daon.fido.sdk.sample.kt.transaction.RegistrationChoicesScreen
+import com.daon.fido.sdk.sample.kt.authenticators.RegistrationChoicesScreen
 import com.daon.fido.sdk.sample.kt.transaction.TransactionChoicesScreen
 import com.daon.fido.sdk.sample.kt.transaction.TransactionConfirmationScreen
 import com.daon.fido.sdk.sample.kt.face.FaceScreen
@@ -75,6 +74,10 @@ class IntroActivity : AppCompatActivity() {
                                         ),
                                     )
                                 },
+                                onNavigateToAccounts = {navigateUp: () -> Unit, viewModel: ViewModel ->
+                                    navController.navigate(
+                                        Screen.Accounts.createRoute(
+                                            navigateUp, viewModel))},
                                 onNavigateToPasscode = {navController.navigate(Screen.Passcode.route)},
                                 onNavigateToFace = {navController.navigate(Screen.Face.route)},
                                 onNavigateToFingerprint = { navController.navigate(Screen.Fingerprint.route)},
@@ -123,7 +126,13 @@ class IntroActivity : AppCompatActivity() {
 
                     // Composable for the Face screen
                     composable(Screen.Face.route) {
-                        FaceScreen(onNavigateUp = { navController.popBackStack()})
+                        val parentEntry = remember(it) { navController.getBackStackEntry(Screen.Intro.route) }
+                        val parentViewModel = hiltViewModel<IntroViewModel>(parentEntry)
+                        FaceScreen(onNavigateUp = { navController.popBackStack()}, parentViewModel,
+                            onNavigateToAccounts = {navigateUp: () -> Unit, viewModel: ViewModel ->
+                                navController.navigate(
+                                    Screen.Accounts.createRoute(
+                                        navigateUp, viewModel))})
                     }
 
                     // Composable for the Fingerprint screen
@@ -139,6 +148,12 @@ class IntroActivity : AppCompatActivity() {
                         val parentEntry = remember(it) { navController.getBackStackEntry(Screen.Intro.route) }
                         val parentViewModel = hiltViewModel<IntroViewModel>(parentEntry)
                         AuthenticationChoicesScreen(onNavigateUp = {navController.popBackStack()}, parentViewModel)
+                    }
+
+                    composable(Screen.Accounts.route) {
+                        val parentEntry = remember(it) { navController.getBackStackEntry(Screen.Intro.route) }
+                        val parentViewModel = hiltViewModel<IntroViewModel>(parentEntry)
+                        AccountListScreen(onNavigateUp = {navController.popBackStack()}, parentViewModel)
                     }
 
                     // Composable for the TransactionAuths screen
@@ -222,6 +237,12 @@ sealed class Screen(val route: String) {
             navigateUp: () -> Unit,
             viewModel: ViewModel
         ) = "transactionConfirmation/$navigateUp/$viewModel"
+    }
+    data object Accounts: Screen("accounts/{navigateUp}/{viewModel}") {
+        fun createRoute(
+            navigateUp: () -> Unit,
+            viewModel: ViewModel
+        ) = "accounts/$navigateUp/$viewModel"
     }
     data object Face: Screen("face")
     data object Fingerprint: Screen("fingerprint")

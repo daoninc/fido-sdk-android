@@ -4,6 +4,7 @@ import android.content.Context;
 import android.provider.Settings;
 import android.widget.Toast;
 
+import com.daon.fido.client.sdk.Fido;
 import com.daon.fido.client.sdk.util.TaskExecutor;
 import com.daon.fido.sdk.sample.basic.model.AuthenticatorInfo;
 import com.daon.fido.sdk.sample.basic.model.ListAuthenticatorsResponse;
@@ -47,14 +48,13 @@ public class ListAuthenticatorsTask extends TaskExecutor<ServerOperationResult<L
         if (result.isSuccessful()) {
             if (result.getResponse() != null) {
                 AuthenticatorInfo[] authenticatorInfoList = result.getResponse().getAuthenticatorInfoList();
-                String deviceId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+                String deviceId = Fido.getInstance(context).getDeviceInfo().getDeviceId();
                 listener.showAuthSelection(AuthenticatorUtil.removeAuthenticatorsNotOnThisDevice(deviceId, authenticatorInfoList));
             } else {
                 listener.showProgress(false);
             }
         } else {
             listener.showProgress(false);
-            Toast.makeText(context, result.getError().getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 

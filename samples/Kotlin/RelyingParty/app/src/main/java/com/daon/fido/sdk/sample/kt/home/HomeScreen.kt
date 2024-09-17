@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -127,7 +128,10 @@ fun HomeScreen(
 
     ) {
         Text(
-            text = "Welcome $user", fontSize = 20.sp, color = ButtonColor
+            text = "Welcome", fontSize = 20.sp, fontWeight = FontWeight.W600 , color = ButtonColor
+        )
+        Text(
+            text = "$user", fontSize = 20.sp, color = ButtonColor
         )
 
         Spacer(modifier = Modifier.height(height = 50.dp))
@@ -161,7 +165,7 @@ fun HomeScreen(
                 backgroundColor = ButtonColor, contentColor = Color.White
             )
         ) {
-            Text(text = stringResource(R.string.action_reset))
+            Text(text = stringResource(R.string.action_delete))
         }
         Spacer(modifier = Modifier.height(height = 10.dp))
     }

@@ -49,8 +49,9 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 fun IntroScreen(
     onNavigateToHome: (username: String) -> Unit,
     onNavigateToChooseAuth: (() -> Unit, ViewModel) -> Unit,
+    onNavigateToAccounts: (() -> Unit, ViewModel) -> Unit,
     onNavigateToPasscode: () -> Unit,
-    onNavigateToFace: () -> Unit,
+    onNavigateToFace: (ViewModel) -> Unit,
     onNavigateToFingerprint: () -> Unit,
     onNavigateUp: () -> Unit
 ) {
@@ -121,6 +122,16 @@ fun IntroScreen(
                 onNavigateToChooseAuth(onNavigateUp, viewModel)
             }
 
+            // Handle account selection for non-ADoS authentication
+            if (uiState.accountListAvailable) {
+                onNavigateToAccounts(onNavigateUp, viewModel)
+            }
+
+
+            if (uiState.accountSelected) {
+                viewModel.submitSelectedAccount()
+            }
+
             // Handle authentication selection
             if (uiState.authSelected) {
                 viewModel.deselectAuth()
@@ -137,13 +148,17 @@ fun IntroScreen(
                     }
                     FACE_AUTH_AAID, ADOS_FACE_AUTH_AAID -> {
                         if (aaid != null) {
-                            onNavigateToFace()
+                            onNavigateToFace(viewModel)
                         }
                     }
                     SILENT_AUTH_AAID -> {
                         viewModel.authenticateSilent()
                     }
                 }
+            }
+
+            if (uiState.accountSelected) {
+                viewModel.submitSelectedAccount()
             }
 
             // Handle login result

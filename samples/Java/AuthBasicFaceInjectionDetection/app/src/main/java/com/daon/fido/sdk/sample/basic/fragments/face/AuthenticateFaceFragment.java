@@ -51,10 +51,8 @@ public class AuthenticateFaceFragment extends BaseFaceFragment {
     @Override
     protected void onRecapture() {
         Log.d(TAG, "onRecapture: ");
-        removePreviewImage();
-        enablePreview();
         hideInfo();
-        startFaceCapture();
+        retakePhoto();
     }
 
     @Override

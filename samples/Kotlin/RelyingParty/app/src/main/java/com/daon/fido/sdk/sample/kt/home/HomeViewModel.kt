@@ -155,7 +155,7 @@ class HomeViewModel @Inject constructor(application: Application, private val fi
     private fun reset() {
         val username = prefs.getString("currentUser", null)
         viewModelScope.launch {
-            when (fido.reset(null, username)) {
+            when (fido.reset(fido.getAppID(), username)) {
                 is Success -> {
                     Log.d("DAON", "Reset Fido Success")
                     _transactionState.update { currentTransactionState ->

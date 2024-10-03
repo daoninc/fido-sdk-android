@@ -43,6 +43,8 @@ public class ChooseAccountDialogFragment extends DialogFragment {
             getDialog().setCanceledOnTouchOutside(false);
         }
 
+        setCancelable(false);
+
         if (getArguments() != null && !getArguments().isEmpty()) {
             String[] accounts = (String[]) getArguments().getSerializable("accounts");
             AccountListAdapter adapter = new AccountListAdapter(getContext(), accounts);

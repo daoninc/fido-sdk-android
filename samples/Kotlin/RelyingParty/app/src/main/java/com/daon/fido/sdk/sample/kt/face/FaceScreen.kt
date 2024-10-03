@@ -22,7 +22,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -63,11 +66,14 @@ fun FaceScreen(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val previewView = remember { PreviewView(context) }
+    
+    var isAccountChooserVisible by rememberSaveable { mutableStateOf(false) }
 
     introViewModel?.let {
         LaunchedEffect(key1 = it.uiState) {
             it.uiState.collect { uiState ->
                 if (uiState.accountListAvailable) {
+                    isAccountChooserVisible = true
                     onNavigateToAccounts(onNavigateUp, it)
                 }
                 if (uiState.accountSelected) {
@@ -90,7 +96,18 @@ fun FaceScreen(
             }
 
             if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.startCapture(lifecycleOwner, previewView)
+                if (!isAccountChooserVisible) {
+                    viewModel.startCapture(lifecycleOwner, previewView)
+                } else {
+                    isAccountChooserVisible = false
+                }
+
+            }
+            if (event == Lifecycle.Event.ON_STOP) {
+                if (!isAccountChooserVisible) {
+                    viewModel.resetFaceUIState()
+                    viewModel.stopCapture()
+                }
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -131,7 +148,7 @@ fun FaceScreen(
 
     // Layout for the face capture screen
     ConstraintLayout(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize().background(Color.Black)
     ) {
         val (previewLayout, buttonsLayout, infoTextView) = createRefs()
 
@@ -144,8 +161,6 @@ fun FaceScreen(
                     end.linkTo(parent.end)
                     bottom.linkTo(buttonsLayout.top)
                 }
-                .background(Color.Transparent)
-
         ) {
             if (uiState.previewImageVisible) {
                 uiState.previewImage?.let {
@@ -156,7 +171,6 @@ fun FaceScreen(
                         modifier = Modifier.padding(25.dp)
                     )
                 }
-
             } else {
                 AndroidView(
                     factory = { previewView },

@@ -42,7 +42,8 @@ public class AccountDeleteTask extends TaskExecutor<ServerOperationResult<Delete
     @Override
     protected void onPostExecute(ServerOperationResult<DeleteAccountResponse> response) {
         if (response.isSuccessful()) {
-            Fido.getInstance(applicationContext).reset(null, username, new IXUAFDeregisterEventListener() {
+            String appId = Fido.getInstance(applicationContext).getAppID();
+            Fido.getInstance(applicationContext).reset(appId, username, new IXUAFDeregisterEventListener() {
                 @Override
                 public void onDeregistrationComplete() {
                     listener.onDeregisterComplete();

@@ -259,14 +259,23 @@ public class IntroActivity extends AppCompatActivity implements UserSignupTask.U
         Bundle bundle = new Bundle();
         bundle.putSerializable("accounts", accounts);
 
+        ChooseAccountDialogFragment chooseAccountDialogFragment = getChooseAccountDialogFragment(accountInfos, bundle);
+
         // NOTE!
         // Get current activity. If this is an ADOS authentication, the current activity is the ADOS Capture Activity,
         // since the authenticator is still active. For non-ADOS authentications, the current activity is the IntroActivity.
+        //
+        // WORKAROUND:
+        // Except for the Silent authenticator, the currentActivity will be CaptureActivity, for non ados,
+        // the CaptureActivity will be finished before the dialog is shown. So check if the current activity is finishing.
+
         CustomApplication app = (CustomApplication) getApplication();
         FragmentActivity currentActivity = (FragmentActivity) app.getCurrentActivity();
 
-        ChooseAccountDialogFragment chooseAccountDialogFragment = getChooseAccountDialogFragment(accountInfos, bundle);
-        FragmentTransaction ft = currentActivity.getSupportFragmentManager().beginTransaction();
+        FragmentTransaction ft = currentActivity.isFinishing() ?
+                getSupportFragmentManager().beginTransaction() :
+                currentActivity.getSupportFragmentManager().beginTransaction();
+
         ft.add(chooseAccountDialogFragment, "ChooseAccount_tag");
         ft.commitAllowingStateLoss();
     }

@@ -93,9 +93,6 @@ fun AuthenticatePasscodeScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text (
-                "Passcode"
-        )
-        Text (
             "Enter passcode"
         )
 

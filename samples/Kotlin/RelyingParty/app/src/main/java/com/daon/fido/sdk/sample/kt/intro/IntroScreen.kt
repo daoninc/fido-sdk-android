@@ -1,5 +1,6 @@
 package com.daon.fido.sdk.sample.kt.intro
 
+import android.Manifest
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -26,6 +27,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
 import com.daon.fido.sdk.sample.kt.model.ADOS_FACE_AUTH_AAID
@@ -63,9 +65,9 @@ fun IntroScreen(
     // Basic permissions required for the app to function
     val permissionStates = rememberMultiplePermissionsState(
         permissions = listOf(
-            android.Manifest.permission.ACCESS_FINE_LOCATION,
-            android.Manifest.permission.READ_PHONE_STATE,
-            android.Manifest.permission.ACCESS_WIFI_STATE
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.ACCESS_WIFI_STATE
         )
     )
 
@@ -74,7 +76,7 @@ fun IntroScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(key1 = lifecycleOwner, effect = {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == androidx.lifecycle.Lifecycle.Event.ON_START) {
+            if (event == Lifecycle.Event.ON_START) {
                 viewModel.initFido()
                 if (!permissionStates.allPermissionsGranted) {
                     permissionStates.launchMultiplePermissionRequest()
@@ -157,10 +159,7 @@ fun IntroScreen(
                 }
             }
 
-            if (uiState.accountSelected) {
-                viewModel.submitSelectedAccount()
-            }
-
+            inProgress = uiState.inProgress
             // Handle login result
             uiState.loginResult?.let { loginResult ->
                 if (loginResult.success) {
@@ -179,8 +178,6 @@ fun IntroScreen(
                 viewModel.resetLoginResult()
             }
 
-
-            inProgress = uiState.inProgress
         }
     }
 

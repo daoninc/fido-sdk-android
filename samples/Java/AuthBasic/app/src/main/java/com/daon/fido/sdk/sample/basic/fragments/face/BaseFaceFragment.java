@@ -154,6 +154,8 @@ public abstract class BaseFaceFragment extends BaseCaptureFragment implements Fa
             cameraPermissionGranted = true;
         } else {
             explicitCameraPermission = ExplicitPermission.DENIED;
+            if (getController() != null)
+                getController().completeCaptureWithError(new AuthenticatorError(IXAErrorCodes.ERROR_HW_UNAVAILABLE, getString(R.string.face_camera_access_denied)));
             completeCaptureWithError(new AuthenticatorError(IXAErrorCodes.ERROR_HW_UNAVAILABLE, getString(R.string.face_camera_access_denied)));
         }
     }
@@ -168,9 +170,9 @@ public abstract class BaseFaceFragment extends BaseCaptureFragment implements Fa
             }
         } else {
             if (explicitCameraPermission != ExplicitPermission.GRANTED) {
-                if (getController() != null) {
+                if (getController() != null)
                     getController().completeCaptureWithError(new AuthenticatorError(IXAErrorCodes.ERROR_HW_UNAVAILABLE, getString(R.string.face_camera_access_denied)));
-                }
+                completeCaptureWithError(new AuthenticatorError(IXAErrorCodes.ERROR_HW_UNAVAILABLE, getString(R.string.face_camera_access_denied)));
             }
         }
 

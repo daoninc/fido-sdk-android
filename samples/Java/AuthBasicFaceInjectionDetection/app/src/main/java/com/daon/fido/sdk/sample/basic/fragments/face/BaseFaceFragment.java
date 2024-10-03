@@ -33,6 +33,7 @@ import androidx.camera.view.PreviewView;
 import com.daon.fido.sdk.sample.basic.R;
 import com.daon.fido.sdk.sample.basic.fragments.BaseCaptureFragment;
 import com.daon.sdk.authenticator.controller.AuthenticatorError;
+import com.daon.sdk.authenticator.exception.ControllerInitializationException;
 import com.daon.sdk.device.IXAErrorCodes;
 import com.daon.sdk.face.LivenessResult;
 import com.daon.sdk.face.Result;
@@ -66,9 +67,9 @@ public abstract class BaseFaceFragment extends BaseCaptureFragment implements Fa
             }
         } else {
             if (explicitCameraPermission != ExplicitPermission.GRANTED) {
-                if (getController() != null) {
+                if (getController() != null)
                     getController().completeCaptureWithError(new AuthenticatorError(IXAErrorCodes.ERROR_HW_UNAVAILABLE, getString(R.string.face_camera_access_denied)));
-                }
+                terminateParentActivityWithError(IXAErrorCodes.ERROR_HW_UNAVAILABLE, getString(R.string.face_camera_access_denied));
             }
         }
     }
@@ -76,10 +77,15 @@ public abstract class BaseFaceFragment extends BaseCaptureFragment implements Fa
     @Override
     public void onResume() {
         super.onResume();
-
         if (cameraPermissionGranted) {
             startFaceCapture();
         }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        stopFaceCapture();
     }
 
     @Override
@@ -89,12 +95,25 @@ public abstract class BaseFaceFragment extends BaseCaptureFragment implements Fa
             cameraPermissionGranted = true;
         } else {
             explicitCameraPermission = ExplicitPermission.DENIED;
-            completeCaptureWithError(new AuthenticatorError(IXAErrorCodes.ERROR_HW_UNAVAILABLE, getString(R.string.face_camera_access_denied)));
+            getController().completeCaptureWithError(new AuthenticatorError(IXAErrorCodes.ERROR_HW_UNAVAILABLE, getString(R.string.face_camera_access_denied)));
+            terminateParentActivityWithError(IXAErrorCodes.ERROR_HW_UNAVAILABLE, getString(R.string.face_camera_access_denied));
         }
     }
 
     protected void startFaceCapture() {
-        getController().startFaceCapture(getContext(), getViewLifecycleOwner(), previewView, new Bundle(), this, this, new DefaultCaptureCompleteListener());
+        enablePreview();
+
+        try {
+            getController().startFaceCapture(getContext(),
+                    getViewLifecycleOwner(),
+                    previewView, new Bundle(),
+                    this,
+                    this,
+                    new DefaultCaptureCompleteListener());
+        } catch (ControllerInitializationException e) {
+            getController().completeCaptureWithError(new AuthenticatorError(e.getCode(), e.getMessage()));
+            terminateParentActivityWithError(e.getCode(), e.getMessage());
+        }
     }
 
     protected void stopFaceCapture() {
@@ -209,7 +228,14 @@ public abstract class BaseFaceFragment extends BaseCaptureFragment implements Fa
     }
 
     protected void removePreviewImage() {
-        if (photo != null) photo.setImageDrawable(null);
+        if (photo != null)
+            photo.setImageDrawable(null);
+
+        if (takePhotoButton != null)
+            takePhotoButton.setVisibility(View.GONE);
+
+        if (doneButton != null)
+            doneButton.setVisibility(View.GONE);
     }
 
     protected void enablePreview() {
@@ -226,15 +252,7 @@ public abstract class BaseFaceFragment extends BaseCaptureFragment implements Fa
 
     protected void retakePhoto() {
         stopFaceCapture();
-
-        enablePreview();
         startFaceCapture();
-
-        if (takePhotoButton != null)
-            takePhotoButton.setVisibility(View.GONE);
-
-        if (doneButton != null)
-            doneButton.setVisibility(View.GONE);
     }
 
     protected void retakePhotoDelayed() {

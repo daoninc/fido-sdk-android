@@ -272,11 +272,19 @@ class IntroViewModel @Inject constructor(application: Application, private val f
 
     // Authenticate the user
     fun authenticate() {
+        var accountsArray:List<String> = emptyList()
+        val result = fido.getAccounts()
+        result.onSuccess { accounts ->
+            accountsArray = accounts
+        }
         _uiState.update { currentUiState ->
             currentUiState.copy(inProgress = true)
         }
         viewModelScope.launch(Dispatchers.Default) {
             val bundle = Bundle()
+            if (accountsArray.isNotEmpty() && accountsArray.size == 1) {
+                bundle.putString(IXUAF.USERNAME, accountsArray[0])
+            }
             when (val response = fido.authenticate(bundle)) {
 
                 is Success -> {
@@ -320,7 +328,7 @@ class IntroViewModel @Inject constructor(application: Application, private val f
     fun resetUiState() {
         _uiState.update { currentUiState ->
             currentUiState.copy(
-                inProgress = false,
+                //inProgress = false,
                 accountCreationResult = null,
                 loginResult = null)
         }

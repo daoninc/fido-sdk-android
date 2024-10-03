@@ -253,7 +253,6 @@ class PasscodeViewModel @Inject constructor(
                 }
 
                 CaptureCompleteResult.Type.CLIENT_ERROR -> {
-                    _captureCompleteWithError.value = true
                     if (controller.isRegistration) {
                         _captureInfo.value = "Passcode registration failed. "
                     } else {

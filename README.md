@@ -35,14 +35,14 @@ In your project-level build.gradle file, make sure to include the Daon Maven rep
 Add the following dependencies to the build.gradle file:
 
 ```gradle
-implementation 'com.daon.sdk:fido-kt:4.8.108'
-implementation 'com.daon.sdk:fido-device:4.8.4'
+implementation 'com.daon.sdk:fido-kt:4.8.139'
+implementation 'com.daon.sdk:fido-device:4.8.5'
 implementation 'com.daon.sdk:fido-crypto:4.8.7'
-implementation 'com.daon.sdk:fido-auth-common:4.8.32'
-implementation 'com.daon.sdk:fido-auth-authenticator:4.8.32'
+implementation 'com.daon.sdk:fido-auth-common:4.8.35'
+implementation 'com.daon.sdk:fido-auth-authenticator:4.8.35'
 
 // Face authenticator with Injection Attack Detection
-implementation 'com.daon.sdk:fido-auth-face-ifp:4.8.32'
+implementation 'com.daon.sdk:fido-auth-face-ifp:4.8.35'
 implementation 'com.daon.sdk:face:5.3.36'
 implementation 'com.daon.sdk:face-quality:3.2.103'
 implementation 'com.daon.sdk:face-capture:1.7.36'

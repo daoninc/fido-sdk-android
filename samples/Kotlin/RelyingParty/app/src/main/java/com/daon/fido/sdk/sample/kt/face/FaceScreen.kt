@@ -1,5 +1,6 @@
 package com.daon.fido.sdk.sample.kt.face
 import android.Manifest
+import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.util.Log
 import android.widget.Toast
@@ -111,9 +112,15 @@ fun FaceScreen(
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
+
+        val activity = context as Activity
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
+
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
+            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
+
     })
 
 
@@ -142,10 +149,6 @@ fun FaceScreen(
         onNavigateUp()
     }
 
-    // Lock the screen orientation to portrait
-    LockScreenOrientation(orientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
-
-
     // Layout for the face capture screen
     ConstraintLayout(
         modifier = Modifier.fillMaxSize().background(Color.Black)
@@ -168,7 +171,7 @@ fun FaceScreen(
                     Image(
                         bitmap = imageBitmap,
                         contentDescription = "Preview Image",
-                        modifier = Modifier.padding(25.dp)
+                        modifier = Modifier.padding(50.dp)
                     )
                 }
             } else {
@@ -183,7 +186,6 @@ fun FaceScreen(
         Row(
             modifier = Modifier
                 .constrainAs(buttonsLayout) {
-                    top.linkTo(previewLayout.bottom)
                     bottom.linkTo(parent.bottom)
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)

@@ -1,5 +1,6 @@
 package com.daon.fido.sdk.sample.kt.fingerprint
 
+import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -55,7 +56,11 @@ fun FingerprintScreen(
             delay(100)
             fingerprintViewModel.onStart(context)
         }
+        val activity = context as Activity
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
+
         onDispose {
+            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             fingerprintViewModel.onStop()
         }
     }
@@ -66,9 +71,6 @@ fun FingerprintScreen(
         Toast.makeText(context, captureInfo.value, Toast.LENGTH_SHORT).show()
         fingerprintViewModel.resetCaptureInfo()
     }
-
-    //Lock the screen orientation to portrait
-    LockScreenOrientation(orientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
 
     // fingerprint capture UI
     Column(

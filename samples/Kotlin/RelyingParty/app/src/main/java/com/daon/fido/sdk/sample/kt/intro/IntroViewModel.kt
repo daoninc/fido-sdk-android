@@ -10,7 +10,6 @@ import androidx.lifecycle.viewModelScope
 import com.daon.fido.client.sdk.Failure
 import com.daon.fido.client.sdk.IXUAF
 import com.daon.fido.client.sdk.Success
-import com.daon.fido.client.sdk.core.ErrorFactory
 import com.daon.fido.client.sdk.model.AccountInfo
 import com.daon.fido.client.sdk.model.Authenticator
 import com.daon.fido.sdk.sample.kt.BaseViewModel

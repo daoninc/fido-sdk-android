@@ -106,6 +106,7 @@ fun AuthenticatePasscodeScreen(
             onValueChange = {
                 textValue1 = it
             },
+            maxLines = 1,
             keyboardOptions = KeyboardOptions.Default.copy(
                 imeAction = ImeAction.Next,
                 keyboardType = KeyboardType.NumberPassword

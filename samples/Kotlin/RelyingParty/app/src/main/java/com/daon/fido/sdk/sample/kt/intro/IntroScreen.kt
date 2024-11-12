@@ -15,6 +15,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,7 +60,7 @@ fun IntroScreen(
 ) {
     // ViewModel for the IntroScreen
     val viewModel = hiltViewModel<IntroViewModel>()
-    var inProgress by remember { mutableStateOf(false) }
+    val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
     // Basic permissions required for the app to function
@@ -159,7 +160,6 @@ fun IntroScreen(
                 }
             }
 
-            inProgress = uiState.inProgress
             // Handle login result
             uiState.loginResult?.let { loginResult ->
                 if (loginResult.success) {
@@ -200,18 +200,19 @@ fun IntroScreen(
             color = ButtonColor
         )
         Spacer(modifier = Modifier.height(height = 50.dp))
-        LoginButton(isDisplayed = inProgress, viewModel = viewModel)
-        CircularIndeterminateProgressBar(isDisplayed = inProgress)
-        CreateAccountButton(isDisplayed = inProgress, viewModel = viewModel)
+        LoginButton(viewModel = viewModel)
+        CircularIndeterminateProgressBar(isDisplayed = uiState.inProgress)
+        CreateAccountButton(viewModel = viewModel)
     }
 }
 
 
 
 @Composable
-fun LoginButton(isDisplayed: Boolean, viewModel: IntroViewModel) {
+fun LoginButton(viewModel: IntroViewModel) {
+    val uiState by viewModel.uiState.collectAsState()
     // Display the login button if not in progress
-    if (!isDisplayed) {
+    if (!uiState.inProgress) {
         Button(
             onClick = {
                 viewModel.resetUiState()
@@ -229,9 +230,10 @@ fun LoginButton(isDisplayed: Boolean, viewModel: IntroViewModel) {
 }
 
 @Composable
-fun CreateAccountButton(isDisplayed: Boolean, viewModel: IntroViewModel) {
+fun CreateAccountButton(viewModel: IntroViewModel) {
+    val uiState by viewModel.uiState.collectAsState()
     // Display the create account button if not in progress
-    if (!isDisplayed) {
+    if (!uiState.inProgress) {
         Button(
             onClick = {
                 Log.d("DAON", "CreateAccount onClick")

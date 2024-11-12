@@ -208,54 +208,6 @@ class AuthenticatorsViewModel @Inject constructor(
         }
     }
 
-
-    // Unlock and remove the selected authenticator.
-    fun remove(auth: Authenticator) {
-        _authState.update { currentAuthState ->
-            currentAuthState.copy(inProgress = true)
-        }
-        viewModelScope.launch(Dispatchers.Default) {
-            val username = prefs.getString("currentUser", null).toString()
-
-            when (val response = fido.remove(auth.aaid, username)) {
-                is Success -> {
-                    // Handle successful removal.
-                    updateAuthToDeregister(null, -1)
-                    Log.d("DAON", "fido remove success")
-                    _authState.update { currentAuthState ->
-                        currentAuthState.copy(
-                            inProgress = false,
-                            deregistrationResult = DeregistrationResult(
-                                success = true,
-                                message = "Remove authenticator ${auth.aaid} success"
-                            )
-                        )
-                    }
-                    discover()
-                }
-
-                is Failure -> {
-                    // Handle removal failure.
-                    Log.d("DAON", "fido remove failure")
-                    updateAuthToDeregister(null, -1)
-                    _authState.update { currentAuthState ->
-                        currentAuthState.copy(
-                            inProgress = false,
-                            deregistrationResult = DeregistrationResult(
-                                success = false,
-                                message = "Reason for remove authenticator failure is: ${
-                                    response.params.getString(
-                                        IXUAF.ERROR_MESSAGE
-                                    )
-                                }"
-                            )
-                        )
-                    }
-                }
-            }
-        }
-    }
-
     // Deregister the selected authenticator.
     fun deregister(auth: Authenticator) {
         _authState.update { currentAuthState ->

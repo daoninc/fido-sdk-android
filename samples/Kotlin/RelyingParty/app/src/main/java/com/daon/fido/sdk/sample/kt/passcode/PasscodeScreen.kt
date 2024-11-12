@@ -1,13 +1,19 @@
 package com.daon.fido.sdk.sample.kt.passcode
 
 import android.widget.Toast
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 /**
  * UI for the passcode capture process.
@@ -24,13 +30,19 @@ fun PasscodeScreen(
     val captureInfo = passcodeViewModel.captureInfo.collectAsState()
     val context = LocalContext.current
 
-    // Initialize the controller when the composable enters the composition
-    DisposableEffect(key1 = passcodeViewModel) {
-        passcodeViewModel.intializeController()
-        onDispose {
-
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(key1 = lifecycleOwner, effect = {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                passcodeViewModel.intializeController()
+            }
         }
-    }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    })
+
 
     //Handle controller instantiation error
     LaunchedEffect(key1 = passcodeViewModel.onControllerInstantiateError) {
@@ -67,7 +79,12 @@ fun PasscodeScreen(
             }
         }
     } else {
-        Text("Waiting for the controller to initialize ...")
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Initializing controller, please wait ...")
+        }
     }
 
 }

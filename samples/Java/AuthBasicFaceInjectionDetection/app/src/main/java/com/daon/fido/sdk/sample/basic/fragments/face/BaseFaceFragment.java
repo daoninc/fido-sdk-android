@@ -103,17 +103,12 @@ public abstract class BaseFaceFragment extends BaseCaptureFragment implements Fa
     protected void startFaceCapture() {
         enablePreview();
 
-        try {
-            getController().startFaceCapture(getContext(),
-                    getViewLifecycleOwner(),
-                    previewView, new Bundle(),
-                    this,
-                    this,
-                    new DefaultCaptureCompleteListener());
-        } catch (ControllerInitializationException e) {
-            getController().completeCaptureWithError(new AuthenticatorError(e.getCode(), e.getMessage()));
-            terminateParentActivityWithError(e.getCode(), e.getMessage());
-        }
+        getController().startFaceCapture(getContext(),
+                getViewLifecycleOwner(),
+                previewView, new Bundle(),
+                this,
+                this,
+                new DefaultCaptureCompleteListener());
     }
 
     protected void stopFaceCapture() {

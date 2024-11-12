@@ -118,7 +118,8 @@ class FaceViewModel @Inject constructor(
      * Stops the face capture process.
      */
     fun stopCapture() {
-        faceController.stopFaceCapture()
+        if (this::faceController.isInitialized)
+            faceController.stopFaceCapture()
     }
 
     /**

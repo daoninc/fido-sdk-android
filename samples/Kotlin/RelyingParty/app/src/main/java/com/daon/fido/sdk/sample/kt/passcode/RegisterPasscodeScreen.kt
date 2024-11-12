@@ -111,6 +111,7 @@ fun RegisterPasscodeScreen(
             onValueChange = {
                 textValue1 = it
             },
+            maxLines = 1,
             keyboardOptions = KeyboardOptions(
                 imeAction = ImeAction.Next,
                 keyboardType = KeyboardType.NumberPassword
@@ -129,6 +130,7 @@ fun RegisterPasscodeScreen(
             onValueChange = {
                 textValue2 = it
             },
+            maxLines = 1,
             keyboardOptions = KeyboardOptions.Default.copy(
                 imeAction = ImeAction.Next,
                 keyboardType = KeyboardType.NumberPassword

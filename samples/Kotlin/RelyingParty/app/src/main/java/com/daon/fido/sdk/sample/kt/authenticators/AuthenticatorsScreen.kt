@@ -172,30 +172,6 @@ fun AuthenticatorsScreen(
                         )
 
                     }
-                    Button(
-                        onClick = {
-                            if (authToDeregister != null) {
-                                viewModel.remove(viewModel.authState.value.authToDeregister!!)
-                            } else {
-                                Toast.makeText(
-                                    context,
-                                    "Please select one authenticator from the list.",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            backgroundColor = ButtonColor,
-                            contentColor = Color.White
-                        ) ,
-                        enabled = authToDeregister != null
-                    ) {
-                        Text(
-                            text = "Remove",
-                            style = TextStyle(fontSize = 15.sp)
-                        )
-
-                    }
 
                     Button(
                         onClick = {

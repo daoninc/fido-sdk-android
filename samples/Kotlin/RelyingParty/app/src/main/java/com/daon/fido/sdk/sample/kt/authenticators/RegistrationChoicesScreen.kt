@@ -35,7 +35,8 @@ fun RegistrationChoicesScreen(onNavigateUp: () -> Unit, viewModel: Authenticator
                 backgroundColor = MaterialTheme.colors.background,
                 title = { Text("Select the authenticator to register")}
             )
-        }
+        },
+        modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars)
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),

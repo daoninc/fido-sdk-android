@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import com.daon.fido.client.sdk.Failure
 import com.daon.fido.client.sdk.IXUAF
+import com.daon.fido.client.sdk.IXUAFService
 import com.daon.fido.client.sdk.Response
 import com.daon.fido.client.sdk.Success
 import com.daon.fido.client.sdk.core.ErrorFactory
@@ -38,7 +39,7 @@ import java.util.UUID
 /**
  * @suppress
  */
-class RPSAService private constructor(private val context: Context) {
+class RPSAService (private val context: Context, private val params: Bundle): IXUAFService {
     //Resources
     private val serverResourceAccount = "accounts"
     private val serverResourceRegRequests = "regRequests"
@@ -50,37 +51,13 @@ class RPSAService private constructor(private val context: Context) {
     private val serverResourceListAuthenticators = "listAuthenticators"
     private val serverResourceSubmitFailedAttempts = "failedTransactionData"
 
-    internal enum class State {
-        Login, Transaction
-    }
-
-    private lateinit var mState: State
-
     private val TAG = RPSAService::class.simpleName ?: LogUtils.TAG
 
-    companion object {
-        private var instance: RPSAService? = null
-        private lateinit var http: HTTP
-        private var sessionId: String? = null
-        private var mRegRequestId: String? = null
-        private var cachedRegistrationRequestId: String? = null
-        private var cachedRegistrationRequest: String? = null
-        private var mAuthRequestId: String? = null
-        private var mSingleShotRequest: String? = null
-        fun getInstance(context: Context, params: Bundle): RPSAService {
-            LogUtils.logVerbose(
-                context, RPSAService::class.simpleName ?: LogUtils.TAG, "RPSAService getInstance"
-            )
-            if (instance == null) {
-                instance = RPSAService(context)
-                http = HTTP(params)
-            }
-            return instance!!
-        }
-    }
+    private var http = HTTP(params)
+    private var cachedRegistrationRequestId: String? = null
+    private var cachedRegistrationRequest: String? = null
 
-
-    fun serviceCreateAccount(params: Bundle): Response {
+    override suspend fun serviceRequestAccess(params: Bundle): Response {
         LogUtils.logVerbose(context, TAG, "RPSAService serviceCreateAccount")
         val username =
             params.getString(IXUAF.USERNAME) ?: UUID.randomUUID().toString().substring(0, 15)
@@ -91,17 +68,20 @@ class RPSAService private constructor(private val context: Context) {
         val account = CreateAccount(
             firstname, lastname, username, password, registration, Locale.getDefault().toString()
         )
+        val sessionId = params.getString("sessionId")
         val payload = Gson().toJson(account)
-        when (val httpResponse = http.post(serverResourceAccount, payload)) {
+        when (val httpResponse = http.post(serverResourceAccount, payload, sessionId)) {
             is HTTP.Success -> {
                 return if (httpResponse.httpStatusCode == HttpURLConnection.HTTP_CREATED || httpResponse.httpStatusCode == HttpURLConnection.HTTP_OK) {
                     val createAccountResponse =
                         Gson().fromJson(httpResponse.payload, CreateAccountResponse::class.java)
-                    http.setSessionId(createAccountResponse.sessionId)
-                    sessionId = createAccountResponse.sessionId
                     cachedRegistrationRequest = createAccountResponse.fidoRegistrationRequest
                     cachedRegistrationRequestId = createAccountResponse.registrationRequestId
-                    Success(Bundle())
+                    val result = Bundle()
+                    result.putString("sessionId", createAccountResponse.sessionId)
+                    result.putString("cachedRegRequest", createAccountResponse.fidoRegistrationRequest)
+                    result.putString("cachedRegRequestId", createAccountResponse.registrationRequestId)
+                    Success(result)
                 } else {
                     val error: Error = try {
                         LogUtils.logError(context, TAG, "regRequests error ${httpResponse.payload}")
@@ -128,18 +108,17 @@ class RPSAService private constructor(private val context: Context) {
         return bundle
     }
 
-    fun serviceDeleteSession(): Response {
+    override suspend fun serviceRevokeAccess(params: Bundle): Response {
+        val sessionId = params.getString("sessionId")
         if (sessionId != null) {
-            val httpResponse = http.deleteResource(serverResourceSessions, sessionId!!, false)
-            when (httpResponse) {
+            val httpResponse = http.deleteResource(serverResourceSessions, sessionId!!, false, sessionId)
+            return when (httpResponse) {
                 is HTTP.Success -> {
-                    http.setSessionId(null)
-                    sessionId = null
-                    return Success(Bundle())
+                    Success(Bundle())
                 }
 
                 is HTTP.Error -> {
-                    return Failure(createFailureBundle(httpResponse.code, httpResponse.message))
+                    Failure(createFailureBundle(httpResponse.code, httpResponse.message))
                 }
             }
         } else {
@@ -151,18 +130,17 @@ class RPSAService private constructor(private val context: Context) {
         }
     }
 
-    fun serviceDeleteAccount(): Response {
+    override suspend fun serviceDeleteUser(params: Bundle): Response {
+        val sessionId = params.getString("sessionId")
         if (sessionId != null) {
-            val httpResponse = http.deleteResource(serverResourceAccount, sessionId!!, true)
-            when (httpResponse) {
+            val httpResponse = http.deleteResource(serverResourceAccount, sessionId!!, true, sessionId)
+            return when (httpResponse) {
                 is HTTP.Success -> {
-                    http.setSessionId(null)
-                    sessionId = null
-                    return Success(Bundle())
+                    Success(Bundle())
                 }
 
                 is HTTP.Error -> {
-                    return Failure(createFailureBundle(httpResponse.code, httpResponse.message))
+                    Failure(createFailureBundle(httpResponse.code, httpResponse.message))
                 }
             }
         } else {
@@ -174,17 +152,17 @@ class RPSAService private constructor(private val context: Context) {
         }
     }
 
-    fun serviceRequestRegistration(): Response {
+    override suspend fun serviceRequestRegistration(inParams: Bundle): Response {
         if (cachedRegistrationRequest != null) {
             val result = Bundle()
             result.putString(IXUAF.REG_REQUEST, cachedRegistrationRequest)
             result.putString(IXUAF.REQUEST_ID, cachedRegistrationRequestId)
-            mRegRequestId = cachedRegistrationRequestId
             cachedRegistrationRequest = null
             cachedRegistrationRequestId = null
             return Success(result)
         } else {
-            when (val httpResponse = http.get(serverResourceRegRequests)) {
+            val sessionId = inParams.getString("sessionId")
+            when (val httpResponse = http.get(serverResourceRegRequests, sessionId)) {
                 is HTTP.Success -> {
                     if (httpResponse.httpStatusCode == HttpURLConnection.HTTP_CREATED || httpResponse.httpStatusCode == HttpURLConnection.HTTP_OK) {
                         LogUtils.logVerbose(context, TAG, "serviceRequestRegistration success OK")
@@ -194,7 +172,6 @@ class RPSAService private constructor(private val context: Context) {
                         val result = Bundle()
                         result.putString(IXUAF.REG_REQUEST, regResponse.fidoRegistrationRequest)
                         result.putString(IXUAF.REQUEST_ID, regResponse.registrationRequestId)
-                        mRegRequestId = regResponse.registrationRequestId
                         return Success(result)
                     } else {
                         val error: Error = try {
@@ -217,15 +194,16 @@ class RPSAService private constructor(private val context: Context) {
         }
     }
 
-    fun serviceRegister(params: Bundle): Response {
+    override suspend fun serviceRegister(params: Bundle): Response {
         LogUtils.logVerbose(context, TAG, "serviceRegister")
         val fidoRegistrationResponse: String =
             params.getString(IXUAF.REG_RESPONSE) ?: params.getString("serverData")!!
-        val registrationChallengeId = mRegRequestId
+        val registrationChallengeId = params.getString(IXUAF.REQUEST_ID)!!
         val createAuthenticator =
             CreateAuthenticator(fidoRegistrationResponse, registrationChallengeId)
+        val sessionId = params.getString("sessionId")
         val payload = Gson().toJson(createAuthenticator)
-        when (val httpResponse = http.post(serverResourceAuthenticators, payload)) {
+        when (val httpResponse = http.post(serverResourceAuthenticators, payload, sessionId)) {
             is HTTP.Success -> {
                 if (httpResponse.httpStatusCode == HttpURLConnection.HTTP_CREATED || httpResponse.httpStatusCode == HttpURLConnection.HTTP_OK) {
                     LogUtils.logVerbose(context, TAG, "serviceRegister Success OK")
@@ -270,9 +248,9 @@ class RPSAService private constructor(private val context: Context) {
 
     }
 
-    fun serviceRequestAuthentication(params: Bundle): Response {
+    override suspend fun serviceRequestAuthentication(params: Bundle): Response {
         LogUtils.logVerbose(context, TAG, "serviceRegister")
-        mState = if (sessionId == null) State.Login else State.Transaction
+        val sessionId = params.getString("sessionId")
         val transactionId = params.getString(IXUAF.ID)
         val username = params.getString(IXUAF.USERNAME)
         val singleshot = params.getBoolean(IXUAF.SINGLE_SHOT)
@@ -282,24 +260,28 @@ class RPSAService private constructor(private val context: Context) {
         } else {
             return if (sessionId != null) {
                 if (singleshot) {
-                    val appId = params.getString(IXUAF.APP_ID)
-                    val ssar =
-                        SingleShotAuthenticationRequest.createUserAuthWithAllRegisteredAuthenticators(
-                            context, appId, username
+                    try {
+                        val appId = params.getString(IXUAF.APP_ID)
+                        val ssar =
+                            SingleShotAuthenticationRequest.createUserAuthWithAllRegisteredAuthenticators(
+                                context, appId, username
+                            )
+                        ssar.addExtension("com.daon.face.ados.mode", "verify")
+                        ssar.addExtension("com.daon.face.retriesRemaining", "5")
+                        ssar.addExtension("com.daon.face.liveness.passive.type", "server")
+                        ssar.addExtension("com.daon.passcode.type", "ALPHANUMERIC")
+                        ssar.addExtension("com.daon.face.liveness.active.type", "none")
+                        //Add the decChain extension value here
+                        //ssar.addExtension("com.daon.sdk.ados.decChain", decChain)
+                        val result = Bundle()
+                        result.putString(
+                            IXUAF.AUTH_REQUEST, ssar.toString()
                         )
-                    ssar.addExtension("com.daon.face.ados.mode", "verify")
-                    ssar.addExtension("com.daon.face.retriesRemaining", "5")
-                    ssar.addExtension("com.daon.face.liveness.passive.type", "server")
-                    ssar.addExtension("com.daon.passcode.type", "ALPHANUMERIC")
-                    ssar.addExtension("com.daon.face.liveness.active.type", "none")
-                    mSingleShotRequest = ssar.toString()
-                    //Add the decChain extension value here
-                    //ssar.addExtension("com.daon.sdk.ados.decChain", decChain)
-                    val result = Bundle()
-                    result.putString(
-                        IXUAF.AUTH_REQUEST, ssar.toString()
-                    )
-                    return Success(result)
+                        return Success(result)
+                    }catch (e: Exception) {
+                        LogUtils.logError(context, TAG, "serviceRequestAuthentication error ${e.message}")
+                        return Failure(createFailureBundle(-4, e.message))
+                    }
                 } else {
                     //step up
                     getTransactionAuthRequest(params)
@@ -328,19 +310,19 @@ class RPSAService private constructor(private val context: Context) {
             CreateTransactionAuthRequest(otpEnabled = confirmationOTP)
         }
 
-
+        val sessionId = params.getString("sessionId")
         val payload = Gson().toJson(createTransactionAuthRequest)
-        when (val httpResponse = http.post(serverResourceTransactionAuthRequests, payload)) {
+        when (val httpResponse = http.post(serverResourceTransactionAuthRequests, payload, sessionId)) {
             is HTTP.Success -> {
                 if (httpResponse.httpStatusCode == HttpURLConnection.HTTP_CREATED || httpResponse.httpStatusCode == HttpURLConnection.HTTP_OK) {
                     val authResponse = Gson().fromJson(
                         httpResponse.payload, CreateAuthRequestResponse::class.java
                     )
-                    mAuthRequestId = authResponse.authenticationRequestId
                     val result = Bundle()
                     result.putString(
                         IXUAF.AUTH_REQUEST, authResponse.fidoAuthenticationRequest
                     )
+                    result.putString(IXUAF.REQUEST_ID, authResponse.authenticationRequestId)
                     return Success(result)
                 } else {
                     val error: Error = try {
@@ -363,17 +345,18 @@ class RPSAService private constructor(private val context: Context) {
     }
 
     private fun getAuthRequest(relativeUrl: String): Response {
-        when (val httpResponse = http.get(relativeUrl)) {
+        //sessionId is null for login
+        when (val httpResponse = http.get(relativeUrl, null)) {
             is HTTP.Success -> {
                 if (httpResponse.httpStatusCode == HttpURLConnection.HTTP_CREATED || httpResponse.httpStatusCode == HttpURLConnection.HTTP_OK) {
                     val authResponse = Gson().fromJson(
                         httpResponse.payload, CreateAuthRequestResponse::class.java
                     )
-                    mAuthRequestId = authResponse.authenticationRequestId
                     val result = Bundle()
                     result.putString(
                         IXUAF.AUTH_REQUEST, authResponse.fidoAuthenticationRequest
                     )
+                    result.putString(IXUAF.REQUEST_ID, authResponse.authenticationRequestId)
                     return Success(result)
                 } else {
                     val error: Error = try {
@@ -395,9 +378,10 @@ class RPSAService private constructor(private val context: Context) {
         }
     }
 
-    fun serviceAuthenticate(params: Bundle): Response {
+    override suspend fun serviceAuthenticate(params: Bundle): Response {
         LogUtils.logVerbose(context, TAG, "serviceAuthenticate")
-        return if (mState == State.Login) {
+        val sessionId = params.getString("sessionId")
+        return if (sessionId == null) {
             LogUtils.logVerbose(context, TAG, "serviceAuthenticate createSession")
             createSession(params)
         } else {
@@ -411,17 +395,18 @@ class RPSAService private constructor(private val context: Context) {
         val fidoAuthResponse: String =
             params.getString(IXUAF.AUTH_RESPONSE) ?: params.getString(IXUAF.SERVER_DATA)!!
         val createSession = CreateSession(
-            fidoAuthenticationResponse = fidoAuthResponse, authenticationRequestId = mAuthRequestId
+            fidoAuthenticationResponse = fidoAuthResponse, authenticationRequestId = params.getString(
+                IXUAF.REQUEST_ID
+            )!!
         )
         val payload = Gson().toJson(createSession)
-        when (val httpResponse = http.post(serverResourceSessions, payload)) {
+        //sessionId is null for login
+        when (val httpResponse = http.post(serverResourceSessions, payload, null)) {
             is HTTP.Success -> {
                 if (httpResponse.httpStatusCode == HttpURLConnection.HTTP_CREATED || httpResponse.httpStatusCode == HttpURLConnection.HTTP_OK) {
                     val authResponse = Gson().fromJson(
                         httpResponse.payload, CreateSessionResponse::class.java
                     )
-                    sessionId = authResponse.sessionId
-                    http.setSessionId(sessionId)
                     val result = Bundle()
                     result.putString(
                         IXUAF.AUTH_CONFIRMATION, authResponse.fidoAuthenticationResponse
@@ -431,6 +416,7 @@ class RPSAService private constructor(private val context: Context) {
                     result.putString(IXUAF.LAST_LOGIN, authResponse.lastLoggedIn.toString())
                     result.putString(IXUAF.LOGGEDIN_WITH, authResponse.loggedInWith.toString())
                     result.putString(IXUAF.EMAIL, authResponse.email)
+                    result.putString("sessionId", authResponse.sessionId)
                     return Success(result)
                 } else {
                     val error: Error = try {
@@ -454,27 +440,28 @@ class RPSAService private constructor(private val context: Context) {
     }
 
     private fun verify(params: Bundle): Response {
-        val validateTransactionAuth: ValidateTransactionAuth
+        var validateTransactionAuth: ValidateTransactionAuth? = null
         val authResponse: String =
             params.getString(IXUAF.AUTH_RESPONSE) ?: params.getString(IXUAF.SERVER_DATA)!!
-        var authRequest: String? = null
+        var authRequest: String? = params.getString(IXUAF.AUTH_REQUEST)
         val username: String? = params.getString(IXUAF.USERNAME)
-        if (mSingleShotRequest != null) {
-            authRequest = mSingleShotRequest
-        }
-        validateTransactionAuth = if (authRequest != null) {
-            ValidateTransactionAuth(
+        val authRequestId: String? = params.getString(IXUAF.REQUEST_ID)
+
+        if (authRequestId != null) {
+            validateTransactionAuth = ValidateTransactionAuth(
+                fidoAuthenticationResponse = authResponse, authenticationRequestId = authRequestId
+            )
+        } else if (authRequest != null) {
+            validateTransactionAuth = ValidateTransactionAuth(
                 email = username,
                 fidoAuthenticationRequest = authRequest,
                 fidoAuthenticationResponse = authResponse
             )
-        } else {
-            ValidateTransactionAuth(
-                fidoAuthenticationResponse = authResponse, authenticationRequestId = mAuthRequestId
-            )
         }
+
+        val sessionId = params.getString("sessionId")
         val payload = Gson().toJson(validateTransactionAuth)
-        when (val httpResponse = http.post(serverResourceTransactionAuthValidation, payload)) {
+        when (val httpResponse = http.post(serverResourceTransactionAuthValidation, payload, sessionId)) {
             is HTTP.Success -> {
                 if (httpResponse.httpStatusCode == HttpURLConnection.HTTP_CREATED || httpResponse.httpStatusCode == HttpURLConnection.HTTP_OK) {
                     val validateTransactionAuthResponse = Gson().fromJson(
@@ -512,9 +499,10 @@ class RPSAService private constructor(private val context: Context) {
         }
     }
 
-    fun serviceRequestDeregistration(params: Bundle): Response {
+    override suspend fun serviceRequestDeregistration(params: Bundle): Response {
+        val sessionId = params.getString("sessionId")
         val aaid = params.getString(IXUAF.AAID)!!
-        when (val httpResponse = http.get(serverResourceListAuthenticators)) {
+        when (val httpResponse = http.get(serverResourceListAuthenticators, sessionId)) {
             is HTTP.Success -> {
                 if (httpResponse.httpStatusCode == HttpURLConnection.HTTP_CREATED || httpResponse.httpStatusCode == HttpURLConnection.HTTP_OK) {
                     val listAuthenticatorsResponse = Gson().fromJson(
@@ -522,7 +510,7 @@ class RPSAService private constructor(private val context: Context) {
                     )
                     val authenticatorInfo = listAuthenticatorsResponse.authenticatorInfoList
                     return when (val deregRequest =
-                        getDeregistrationRequest(aaid, authenticatorInfo)) {
+                        getDeregistrationRequest(aaid, authenticatorInfo, sessionId)) {
                         is Success -> {
                             Success(deregRequest.params)
                         }
@@ -555,7 +543,7 @@ class RPSAService private constructor(private val context: Context) {
     }
 
     private fun getDeregistrationRequest(
-        aaid: String, authenticatorInfo: Array<AuthenticatorInfo>
+        aaid: String, authenticatorInfo: Array<AuthenticatorInfo>, sessionId: String?
     ): Response {
         var found = false
         var authInfo: AuthenticatorInfo? = null
@@ -567,7 +555,7 @@ class RPSAService private constructor(private val context: Context) {
             }
         }
         if (found && authInfo != null) {
-            val httpResponse = http.deleteResource(serverResourceAuthenticators, authInfo.id, true)
+            val httpResponse = http.deleteResource(serverResourceAuthenticators, authInfo.id, true, sessionId)
             when (httpResponse) {
                 is HTTP.Success -> {
                     if (httpResponse.httpStatusCode == HttpURLConnection.HTTP_OK) {
@@ -600,7 +588,7 @@ class RPSAService private constructor(private val context: Context) {
         }
     }
 
-    fun serviceUpdate(params: Bundle): Response {
+    override suspend fun serviceUpdate(params: Bundle): Response {
         val response = params.getString(IXUAF.SERVER_DATA)
         val uafRequests: Array<UafProtocolMessageBase> = UafMessageUtils.validateUafMessage(
             context, response, UafMessageUtils.OpDirection.Response, null
@@ -613,7 +601,7 @@ class RPSAService private constructor(private val context: Context) {
     }
 
 
-    fun serviceUpdateAttempt(params: Bundle): Response {
+    override suspend fun serviceUpdateAttempt(params: Bundle): Response {
         val submitFailedAttemptRequest = SubmitFailedAttemptRequest(
             emailAddress = params.getString(VerificationAttemptParameters.PARAM_USER_ACCOUNT, null),
             attempt = params.getInt(VerificationAttemptParameters.PARAM_ATTEMPT, Integer.MIN_VALUE)
@@ -630,10 +618,11 @@ class RPSAService private constructor(private val context: Context) {
             userAuthKeyId = params.getString(
                 VerificationAttemptParameters.PARAM_USER_AUTH_KEY_ID, null
             ),
-            authenticationRequestId = mAuthRequestId
+            authenticationRequestId = params.getString(IXUAF.REQUEST_ID, null)
         )
+        val sessionId = params.getString("sessionId")
         val payload = Gson().toJson(submitFailedAttemptRequest)
-        when (val httpResponse = http.post(serverResourceSubmitFailedAttempts, payload)) {
+        when (val httpResponse = http.post(serverResourceSubmitFailedAttempts, payload, sessionId)) {
             is HTTP.Success -> {
                 if (httpResponse.httpStatusCode == HttpURLConnection.HTTP_CREATED || httpResponse.httpStatusCode == HttpURLConnection.HTTP_OK) {
                     val submitFailedAttemptResponse = Gson().fromJson(

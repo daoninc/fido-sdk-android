@@ -42,6 +42,7 @@ import com.daon.fido.client.sdk.model.AccountInfo;
 import com.daon.fido.client.sdk.model.Authenticator;
 import com.daon.fido.sdk.sample.basic.CustomApplication;
 import com.daon.fido.sdk.sample.basic.CustomCaptureFragmentFactory;
+import com.daon.fido.sdk.sample.basic.EdgeToEdgeActivity;
 import com.daon.fido.sdk.sample.basic.R;
 import com.daon.fido.sdk.sample.basic.databinding.ActivityIntroBinding;
 import com.daon.fido.sdk.sample.basic.model.AuthenticationMethod;
@@ -57,7 +58,7 @@ import com.daon.fido.sdk.sample.basic.util.AuthenticatorUtil;
 import java.text.DateFormat;
 import java.util.List;
 
-public class IntroActivity extends AppCompatActivity implements UserSignupTask.UserSignupResultListener {
+public class IntroActivity extends EdgeToEdgeActivity implements UserSignupTask.UserSignupResultListener {
     private static final String TAG = IntroActivity.class.getSimpleName();
     private PermissionHelper permissionHelper;
     private SharedPreferencesManager sharedPreferencesManager;

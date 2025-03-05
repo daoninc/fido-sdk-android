@@ -21,6 +21,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.preference.PreferenceManager;
@@ -31,6 +32,7 @@ import com.daon.fido.client.sdk.IXUAFRegisterEventListener;
 import com.daon.fido.client.sdk.core.Error;
 import com.daon.fido.client.sdk.core.INotifyUafResultCallback;
 import com.daon.fido.client.sdk.model.Authenticator;
+import com.daon.fido.sdk.sample.basic.EdgeToEdgeActivity;
 import com.daon.fido.sdk.sample.basic.databinding.ActivityAuthenticatorsBinding;
 import com.daon.fido.sdk.sample.basic.preferences.SharedPreferencesManager;
 import com.daon.fido.sdk.sample.basic.network.tasks.GetAuthenticatorTask;
@@ -45,7 +47,7 @@ import java.util.Arrays;
 /**
  * @noinspection SpellCheckingInspection
  */
-public class AuthenticatorsActivity extends AppCompatActivity implements ListAuthenticatorsTask.ListAuthenticatorsResultListener, GetAuthenticatorTask.GetAuthenticatorResultListener {
+public class AuthenticatorsActivity extends EdgeToEdgeActivity implements ListAuthenticatorsTask.ListAuthenticatorsResultListener, GetAuthenticatorTask.GetAuthenticatorResultListener {
 
     private static final String TAG = AuthenticatorsActivity.class.getSimpleName();
     private static final String KEY_APP_ID = "fidoAppId";
@@ -75,7 +77,12 @@ public class AuthenticatorsActivity extends AppCompatActivity implements ListAut
             // If the authenticator is archived on the server and is either not available on this
             // device or is not registered with the user
             // then disable deregistration
-            viewBinding.deregisterButton.setEnabled((Fido.getInstance(getApplicationContext()).isRegistered(selectedAuthenticationInfo.getAaid(), sharedPreferencesManager.getStringData(this, SharedPreferencesManager.SHARED_PREF_EMAIL), PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString(KEY_APP_ID, null))) || !selectedAuthenticationInfo.getStatus().equals(ARCHIVED_STATUS));
+            try {
+                viewBinding.deregisterButton.setEnabled((Fido.getInstance(getApplicationContext()).isRegistered(selectedAuthenticationInfo.getAaid(), sharedPreferencesManager.getStringData(this, SharedPreferencesManager.SHARED_PREF_EMAIL), PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString(KEY_APP_ID, null))) || !selectedAuthenticationInfo.getStatus().equals(ARCHIVED_STATUS));
+            } catch (Exception e) {
+                viewBinding.deregisterButton.setEnabled(false);
+            }
+
         });
 
         refreshAuthenticators();

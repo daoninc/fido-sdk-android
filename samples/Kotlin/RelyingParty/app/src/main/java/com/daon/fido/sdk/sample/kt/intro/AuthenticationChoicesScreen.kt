@@ -39,7 +39,8 @@ fun AuthenticationChoicesScreen(onNavigateUp: () -> Unit, viewModel: IntroViewMo
                 backgroundColor = MaterialTheme.colors.background,
                 title = { Text("Select the authenticator to login")}
             )
-        }
+        },
+        modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars)
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),

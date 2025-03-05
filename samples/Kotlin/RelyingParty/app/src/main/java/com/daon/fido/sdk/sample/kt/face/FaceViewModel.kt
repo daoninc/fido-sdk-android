@@ -91,7 +91,7 @@ class FaceViewModel @Inject constructor(
 
           this.lifecycleOwner = lifecycleOwner
 
-          faceController.startFaceCapture(
+          faceController.startCamera(
               getApplication<Application>().baseContext,
               lifecycleOwner,
               previewView,
@@ -100,6 +100,7 @@ class FaceViewModel @Inject constructor(
               PhotoHandler(),
               CaptureCompleteHandler()
           )
+          faceController.startFaceCapture()
 
           getAuthenticationMode()
       } catch (e: ControllerInitializationException) {

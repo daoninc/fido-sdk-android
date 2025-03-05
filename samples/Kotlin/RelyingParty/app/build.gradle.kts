@@ -7,14 +7,14 @@ plugins {
 
 android {
     namespace = "com.daon.fido.sdk.sample.kt"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.daon.fido.sdk.sample.kt"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
-        versionName = "4.8"
+        versionName = "4.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -59,7 +59,6 @@ dependencies {
     implementation(libs.daon.fido.crypto)
     implementation(libs.daon.fido.device)
 
-    implementation(libs.daon.fido.auth.common)
     implementation(libs.daon.fido.auth.authenticator)
     implementation(libs.daon.fido.auth.face.ifp)
 

@@ -11,14 +11,6 @@
     tools:context="com.daon.fido.sdk.sample.basic.ui.home.HomeActivity"
     android:scaleType="centerCrop">
 
-    <ProgressBar
-        android:id="@+id/authenticators_progress"
-        style="?android:attr/progressBarStyleLarge"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:visibility="gone" />
-
     <TextView
         android:id="@+id/textView_title"
         android:layout_width="wrap_content"
@@ -31,64 +23,78 @@
         android:shadowDy="3"
         android:shadowRadius="1.5" />
 
-    <RelativeLayout
-        android:id="@+id/fido_authenticators_form"
-        android:layout_width="fill_parent"
+    <FrameLayout
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:orientation="vertical"
         android:layout_weight="1">
 
-        <LinearLayout
+        <RelativeLayout
+            android:id="@+id/fido_authenticators_form"
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:layout_marginTop="5dip"
-            android:layout_marginBottom="5dip"
-            android:layout_above="@+id/footerLayout"
-            android:id="@+id/listViewLayout"
-            android:baselineAligned="false">
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
-            <ListView
-                android:id="@+id/list_view_authenticators"
-                android:layout_width="0dp"
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_marginTop="5dip"
+                android:layout_marginBottom="5dip"
+                android:layout_above="@+id/footerLayout"
+                android:id="@+id/listViewLayout"
+                android:baselineAligned="false">
+
+                <ListView
+                    android:id="@+id/list_view_authenticators"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:dividerHeight="0.1dp"
+                    android:divider="#0000CC"
+                    android:layout_weight="1"
+                    android:choiceMode="singleChoice"
+                    android:background="#90FFFFFF"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/footerLayout"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:dividerHeight="0.1dp"
-                android:divider="#0000CC"
-                android:layout_weight="1"
-                android:choiceMode="singleChoice"
-                android:background="#90FFFFFF"/>
-        </LinearLayout>
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp"
+                android:weightSum="2"
+                android:layout_alignParentBottom="true">
 
-        <LinearLayout
-            android:id="@+id/footerLayout"
-            android:layout_width="match_parent"
+                <Button
+                    android:layout_weight="1"
+                    android:id="@+id/register_new_authenticator_button"
+                    android:background="@drawable/standard_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/register_new_authenticator"
+                    android:focusable="true" />
+
+                <Button
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    android:id="@+id/deregister_button"
+                    android:background="@drawable/standard_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/action_deregister"
+                    android:focusable="true"
+                    android:enabled="false" />
+
+            </LinearLayout>
+        </RelativeLayout>
+
+        <ProgressBar
+            android:id="@+id/authenticators_progress"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="8dp"
-            android:weightSum="2"
-            android:layout_alignParentBottom="true">
+            android:layout_gravity="center"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone" />
 
-            <Button
-                android:layout_weight="1"
-                android:id="@+id/register_new_authenticator_button"
-                android:background="@drawable/standard_button"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:text="@string/register_new_authenticator"
-                android:focusable="true" />
-
-            <Button
-                android:layout_weight="1"
-                android:layout_marginStart="10dp"
-                android:id="@+id/deregister_button"
-                android:background="@drawable/standard_button"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:text="@string/action_deregister"
-                android:focusable="true"
-                android:enabled="false" />
-
-        </LinearLayout>
-    </RelativeLayout>
+    </FrameLayout>
 
 </LinearLayout>
-

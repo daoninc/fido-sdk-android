@@ -11,14 +11,6 @@
     android:scaleType="centerCrop"
     tools:context="com.daon.fido.sdk.sample.basic.ui.home.HomeActivity">
 
-    <ProgressBar
-        android:id="@+id/home_progress"
-        style="?android:attr/progressBarStyleLarge"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:visibility="gone" />
-
     <TextView
         android:id="@+id/textView_title"
         android:layout_width="wrap_content"
@@ -31,125 +23,139 @@
         android:textColor="#005685"
         android:textSize="40sp" />
 
-    <ScrollView
-        android:id="@+id/home_form"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="20dp">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-        <LinearLayout
+        <ScrollView
+            android:id="@+id/home_form"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="match_parent"
+            android:layout_marginTop="20dp">
 
             <LinearLayout
-                android:id="@+id/home_form_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:background="#90FFFFFF"
                 android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/textView_user_label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="start"
-                    android:text="@string/home_user_label"
-                    android:textSize="17sp" />
-
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:id="@+id/home_form_layout"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp">
-
-                    <TextView
-                        android:id="@+id/textView_user"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="start"
-                        android:text="@string/home_user"
-                        android:textSize="22sp" />
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/textView_logged_in_with_label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="start"
                     android:layout_marginTop="10dp"
-                    android:text="@string/home_logged_in_with_label"
-                    android:textSize="17sp" />
-
-                <LinearLayout
-
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp">
+                    android:background="#90FFFFFF"
+                    android:orientation="vertical">
 
                     <TextView
-                        android:id="@+id/textView_last_logged_in_with"
+                        android:id="@+id/textView_user_label"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="start"
-                        android:text="@string/home_logged_in_with_data"
-                        android:textSize="22sp" />
-                </LinearLayout>
+                        android:text="@string/home_user_label"
+                        android:textSize="17sp" />
 
-                <TextView
-                    android:id="@+id/textView_last_logged_in_label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="start"
-                    android:layout_marginTop="10dp"
-                    android:text="@string/home_last_logged_in_label"
-                    android:textSize="17sp" />
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp">
 
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp">
+                        <TextView
+                            android:id="@+id/textView_user"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="start"
+                            android:text="@string/home_user"
+                            android:textSize="22sp" />
+                    </LinearLayout>
 
                     <TextView
-                        android:id="@+id/textView_last_logged_in_date"
+                        android:id="@+id/textView_logged_in_with_label"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="start"
-                        android:text="@string/home_last_logged_in_date"
-                        android:textSize="22sp" />
+                        android:layout_marginTop="10dp"
+                        android:text="@string/home_logged_in_with_label"
+                        android:textSize="17sp" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp">
+
+                        <TextView
+                            android:id="@+id/textView_last_logged_in_with"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="start"
+                            android:text="@string/home_logged_in_with_data"
+                            android:textSize="22sp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/textView_last_logged_in_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="start"
+                        android:layout_marginTop="10dp"
+                        android:text="@string/home_last_logged_in_label"
+                        android:textSize="17sp" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp">
+
+                        <TextView
+                            android:id="@+id/textView_last_logged_in_date"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="start"
+                            android:text="@string/home_last_logged_in_date"
+                            android:textSize="22sp" />
+                    </LinearLayout>
+
                 </LinearLayout>
+
+                <Button
+                    android:id="@+id/step_up_auth_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/standard_button"
+                    android:focusable="true"
+                    android:text="@string/action_step_up_auth" />
+
+                <Button
+                    android:id="@+id/authenticators_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/standard_button"
+                    android:focusable="true"
+                    android:text="@string/action_manage_authenticators" />
+
+                <Button
+                    android:id="@+id/delete_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/standard_button"
+                    android:focusable="true"
+                    android:text="@string/action_delete" />
 
             </LinearLayout>
+        </ScrollView>
 
-            <Button
-                android:id="@+id/step_up_auth_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/standard_button"
-                android:focusable="true"
-                android:text="@string/action_step_up_auth" />
+        <ProgressBar
+            android:id="@+id/home_progress"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone" />
 
-            <Button
-                android:id="@+id/authenticators_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/standard_button"
-                android:focusable="true"
-                android:text="@string/action_manage_authenticators" />
-
-            <Button
-                android:id="@+id/delete_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/standard_button"
-                android:focusable="true"
-                android:text="@string/action_delete" />
-
-        </LinearLayout>
-    </ScrollView>
+    </FrameLayout>
 
 </LinearLayout>
-

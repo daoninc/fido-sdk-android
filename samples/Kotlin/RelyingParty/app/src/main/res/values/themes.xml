@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.FidoBasic" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+    <style name="Theme.FidoBasic" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color. -->
         <item name="colorPrimary">#005685</item>
         <item name="colorPrimaryVariant">#005685</item>

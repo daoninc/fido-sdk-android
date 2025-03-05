@@ -24,7 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -50,7 +50,7 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun IntroScreen(
-    onNavigateToHome: (username: String) -> Unit,
+    onNavigateToHome: (username: String, sessionId: String) -> Unit,
     onNavigateToChooseAuth: (() -> Unit, ViewModel) -> Unit,
     onNavigateToAccounts: (() -> Unit, ViewModel) -> Unit,
     onNavigateToPasscode: () -> Unit,
@@ -87,6 +87,8 @@ fun IntroScreen(
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
+            // Reset the UI state when the screen is disposed
+            viewModel.resetUiState()
         }
     })
 
@@ -109,7 +111,7 @@ fun IntroScreen(
                         context, "Account created successfully",
                         Toast.LENGTH_SHORT
                     ).show()
-                    onNavigateToHome(uiState.username.toString())
+                    onNavigateToHome(uiState.username.toString(), accountCreationResult.sessionId.toString())
                 } else {
                     Toast.makeText(
                         context, "Account creation failed ${accountCreationResult.message}",
@@ -167,7 +169,7 @@ fun IntroScreen(
                         context, "Authentication success",
                         Toast.LENGTH_SHORT
                     ).show()
-                    onNavigateToHome(uiState.username.toString())
+                    onNavigateToHome(uiState.username.toString(), loginResult.sessionId.toString())
                 } else {
                     Toast.makeText(
                         context,
@@ -178,13 +180,6 @@ fun IntroScreen(
                 viewModel.resetLoginResult()
             }
 
-        }
-    }
-
-    // Reset the UI state when the screen is disposed
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.resetUiState()
         }
     }
 

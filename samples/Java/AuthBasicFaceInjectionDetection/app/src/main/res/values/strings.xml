@@ -71,5 +71,6 @@
     <string name="authenticate_text">Verify</string>
     <string name="face_only">Face Only</string>
     <string name="please_touch_sensor_when_ready">Please touch sensor when ready</string>
+    <string name="enroll_button">Enroll</string>
 
 </resources>

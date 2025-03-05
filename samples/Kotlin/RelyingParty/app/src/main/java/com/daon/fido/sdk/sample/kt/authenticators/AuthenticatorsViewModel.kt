@@ -81,6 +81,8 @@ class AuthenticatorsViewModel @Inject constructor(
     //Public list to hold the list of authenticators discovered.
     val discoverList: List<Authenticator> = _discoverList
 
+    private var sessionId: String = ""
+
 
     fun onStart() {
         //Add a listener to choose authenticator.
@@ -157,6 +159,7 @@ class AuthenticatorsViewModel @Inject constructor(
             if (username != null) {
                 bundle.putString(IXUAF.USERNAME, username)
             }
+            bundle.putString("sessionId", sessionId)
 
             when (val response = fido.register(bundle)) {
                 is Success -> {
@@ -215,8 +218,9 @@ class AuthenticatorsViewModel @Inject constructor(
         }
         viewModelScope.launch(Dispatchers.Default) {
             val username = prefs.getString("currentUser", null).toString()
-
-            when (val response = fido.deregister(auth.aaid, username)) {
+            val params = Bundle()
+            params.putString("sessionId", sessionId)
+            when (val response = fido.deregister(auth.aaid, username, params)) {
                 is Success -> {
                     // Handle successful deregistration.
                     Log.d("DAON", "fido deregister success")
@@ -306,5 +310,9 @@ class AuthenticatorsViewModel @Inject constructor(
             fido.getController(getApplication(), SILENT_AUTH_AAID) as CaptureControllerProtocol
         silentController.startCapture()
         silentController.completeCapture()
+    }
+
+    fun setSessionId(sessionId: String) {
+        this.sessionId = sessionId
     }
 }

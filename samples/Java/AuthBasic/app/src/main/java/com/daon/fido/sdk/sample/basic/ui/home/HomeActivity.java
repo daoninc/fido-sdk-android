@@ -24,6 +24,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -36,6 +37,7 @@ import com.daon.fido.client.sdk.core.Error;
 import com.daon.fido.client.sdk.model.AccountInfo;
 import com.daon.fido.client.sdk.model.Authenticator;
 import com.daon.fido.client.sdk.model.AuthenticatorReg;
+import com.daon.fido.sdk.sample.basic.EdgeToEdgeActivity;
 import com.daon.fido.sdk.sample.basic.R;
 import com.daon.fido.sdk.sample.basic.databinding.ActivityHomeBinding;
 import com.daon.fido.sdk.sample.basic.network.tasks.AccountDeleteTask;
@@ -50,7 +52,7 @@ import com.daon.fido.sdk.sample.basic.util.AuthenticatorUtil;
 import java.util.Arrays;
 import java.util.Date;
 
-public class HomeActivity extends AppCompatActivity implements AccountDeleteTask.AccountDeleteResultListener {
+public class HomeActivity extends EdgeToEdgeActivity implements AccountDeleteTask.AccountDeleteResultListener {
     private static final String TAG = HomeActivity.class.getSimpleName();
 
     private SharedPreferencesManager sharedPreferencesManager;

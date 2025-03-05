@@ -16,12 +16,13 @@ package com.daon.fido.sdk.sample.basic;
 import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.daon.fido.sdk.sample.basic.databinding.ActivityMainBinding;
 import com.daon.fido.sdk.sample.basic.ui.intro.IntroActivity;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends EdgeToEdgeActivity {
     private ActivityMainBinding viewBinding;
     
     @Override

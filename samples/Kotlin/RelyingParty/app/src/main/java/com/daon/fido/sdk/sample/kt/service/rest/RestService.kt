@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import com.daon.fido.client.sdk.Failure
 import com.daon.fido.client.sdk.IXUAF
+import com.daon.fido.client.sdk.IXUAFService
 import com.daon.fido.client.sdk.Response
 import com.daon.fido.client.sdk.Success
 import com.daon.fido.client.sdk.core.ErrorFactory
@@ -26,7 +27,7 @@ import java.net.HttpURLConnection
 /**
  * @suppress
  */
-class RestService private constructor(private val context: Context, params: Bundle) {
+class RestService (private val context: Context, private val params: Bundle): IXUAFService {
     private val USERS = "users"
     private val AUTHENTICATORS = "authenticators"
     private val AUTHENTICATIONREQUESTS = "authenticationRequests"
@@ -39,29 +40,29 @@ class RestService private constructor(private val context: Context, params: Bund
 
     private var http: HTTP = HTTP(params)
     private var appId: String = params.getString("appId").toString()
-    private var regPolicy: String
-    private var authPolicy: String
-    private var mRegRequestId: String? = null
-    private var mAuthRequestId: String? = null
-    private var mSingleShotRequest: String? = null
+    private var regPolicy: String = params.getString("regPolicy") ?: "reg"
+    private var authPolicy: String = params.getString("authPolicy") ?: "auth"
 
     private val TAG = RestService::class.simpleName ?: LogUtils.TAG
 
-    companion object {
-        private var instance: RestService? = null
-        fun getInstance(context: Context, params: Bundle): RestService {
-            LogUtils.logVerbose(context, RestService::class.simpleName ?: LogUtils.TAG,"RestService getInstance")
-            if (instance == null) instance = RestService(context, params)
-            return instance as RestService
-        }
+    override suspend fun serviceRequestAccess(params: Bundle): Response {
+        // Nothing to do at the moment
+
+        // serviceRequestRegistration
+        //
+        // The registration/user will be created if it is not found by a registrationId/applicationId
+        // combination as long as a user is also submitted as part of the registration.
+        //
+        // If a userId is used and the user does not exist then a user will be created.
+        return Success(Bundle())
     }
 
-    init {
-        regPolicy = params.getString("regPolicy") ?: "reg"
-        authPolicy = params.getString("authPolicy") ?: "auth"
+    override suspend fun serviceRevokeAccess(params: Bundle): Response {
+        // Nothing to do at the moment
+        return Success(Bundle())
     }
 
-    fun serviceRequestRegistration(params: Bundle): Response {
+    override suspend fun serviceRequestRegistration(params: Bundle): Response {
         LogUtils.logVerbose(context, TAG, "RestService serviceRequestRegistration")
         when (val httpResponse =
             http.post(REGISTRATIONCHALLENGES, createRequestRegistrationPayload(params))) {
@@ -76,7 +77,6 @@ class RestService private constructor(private val context: Context, params: Bund
                         IXUAF.REG_REQUEST, registrationChallenge.fidoRegistrationRequest
                     )
                     result.putString(IXUAF.REQUEST_ID, registrationChallenge.id)
-                    mRegRequestId = registrationChallenge.id
                     return Success(result)
                 } else {
                     val error: Error = try {
@@ -129,10 +129,11 @@ class RestService private constructor(private val context: Context, params: Bund
         //Example challnege : {"policy":{"policyId":"reg","application":{"applicationId":"fido"}},"registration":{"registrationId":"ft@ft.com fido registration","application":{"applicationId":"fido"},"user":{"userId":"ft@ft.com"}}}
     }
 
-    fun serviceRegister(params: Bundle): Response {
+    override suspend fun serviceRegister(params: Bundle): Response {
         LogUtils.logVerbose(null, TAG, "RestService serviceRegister")
+        val regRequestId = params.getString(IXUAF.REQUEST_ID)
         when (val httpResponse = http.post(
-            "$REGISTRATIONCHALLENGES/$mRegRequestId", createRegistrationPayload(params)
+            "$REGISTRATIONCHALLENGES/$regRequestId", createRegistrationPayload(params)
         )) {
             is HTTP.Success -> {
                 if (httpResponse.httpStatusCode == HttpURLConnection.HTTP_CREATED || httpResponse.httpStatusCode == HttpURLConnection.HTTP_OK) {
@@ -174,37 +175,41 @@ class RestService private constructor(private val context: Context, params: Bund
     private fun createRegistrationPayload(params: Bundle): String {
         val fidoRegistrationResponse: String =
             params.getString(IXUAF.REG_RESPONSE) ?: params.getString(IXUAF.SERVER_DATA)!!
+        val regRequestId = params.getString(IXUAF.REQUEST_ID)
         val request = JSONObject()
-        request.put("id", mRegRequestId)
+        request.put("id", regRequestId)
         request.put("status", "PENDING")
         request.put("fidoRegistrationResponse", fidoRegistrationResponse)
         return request.toString()
     }
 
-    fun serviceRequestAuthentication(params: Bundle): Response {
+    override suspend fun serviceRequestAuthentication(params: Bundle): Response {
         LogUtils.logVerbose(null, TAG, "RestService serviceRequestAuthentication")
-        mAuthRequestId = null
         val singleshot = params.getBoolean(IXUAF.SINGLE_SHOT)
         if (singleshot) {
-            val appId = params.getString(IXUAF.APP_ID)
-            val username = params.getString(IXUAF.USERNAME)
-            val ssar =
-                SingleShotAuthenticationRequest.createUserAuthWithAllRegisteredAuthenticators(
-                    context, appId, username
+            try {
+                val appId = params.getString(IXUAF.APP_ID)
+                val username = params.getString(IXUAF.USERNAME)
+                val ssar =
+                    SingleShotAuthenticationRequest.createUserAuthWithAllRegisteredAuthenticators(
+                        context, appId, username
+                    )
+                ssar.addExtension("com.daon.face.ados.mode", "verify")
+                ssar.addExtension("com.daon.face.retriesRemaining", "5")
+                ssar.addExtension("com.daon.face.liveness.passive.type", "server")
+                ssar.addExtension("com.daon.face.liveness.active.type", "none")
+                ssar.addExtension("com.daon.passcode.type", "ALPHANUMERIC")
+                //Add the decChain extension value here
+                //ssar.addExtension("com.daon.sdk.ados.decChain", decChain)
+                val result = Bundle()
+                result.putString(
+                    IXUAF.AUTH_REQUEST, ssar.toString()
                 )
-            ssar.addExtension("com.daon.face.ados.mode", "verify")
-            ssar.addExtension("com.daon.face.retriesRemaining", "5")
-            ssar.addExtension("com.daon.face.liveness.passive.type", "server")
-            ssar.addExtension("com.daon.face.liveness.active.type", "none")
-            ssar.addExtension("com.daon.passcode.type", "ALPHANUMERIC")
-            mSingleShotRequest = ssar.toString()
-            //Add the decChain extension value here
-            //ssar.addExtension("com.daon.sdk.ados.decChain", decChain)
-            val result = Bundle()
-            result.putString(
-                IXUAF.AUTH_REQUEST, ssar.toString()
-            )
-            return Success(result)
+                return Success(result)
+            } catch (e: Exception) {
+                LogUtils.logError(context, TAG, "serviceRequestAuthentication error ${e.message}")
+                return Failure(createFailureBundle(-4, e.message))
+            }
         } else {
             when (val httpResponse =
                 http.post(AUTHENTICATIONREQUESTS, createAuthenticationRequestPayload(params))) {
@@ -218,7 +223,7 @@ class RestService private constructor(private val context: Context, params: Bund
                         result.putString(
                             IXUAF.AUTH_REQUEST, authenticationChallenge.fidoAuthenticationRequest
                         )
-                        mAuthRequestId = authenticationChallenge.id
+                        result.putString(IXUAF.REQUEST_ID, authenticationChallenge.id)
                         return Success(result)
                     } else {
                         val error: Error = try {
@@ -281,10 +286,11 @@ class RestService private constructor(private val context: Context, params: Bund
         return request.toString()
     }
 
-    fun serviceAuthenticate(params: Bundle): Response {
+    override suspend fun serviceAuthenticate(params: Bundle): Response {
         LogUtils.logVerbose(null, TAG, "RestService serviceAuthenticate")
-        val httpUrl: String = if (mAuthRequestId != null) {
-            "$AUTHENTICATIONREQUESTS/$mAuthRequestId"
+        val authRequestId = params.getString(IXUAF.REQUEST_ID)
+        val httpUrl: String = if (authRequestId != null) {
+            "$AUTHENTICATIONREQUESTS/$authRequestId"
         } else {
             AUTHENTICATIONREQUESTS
         }
@@ -331,15 +337,13 @@ class RestService private constructor(private val context: Context, params: Bund
     private fun createAuthenticationPayload(params: Bundle): String {
         val fidoAuthResponse: String =
             params.getString(IXUAF.AUTH_RESPONSE) ?: params.getString(IXUAF.SERVER_DATA)!!
+        val authRequestId = params.getString(IXUAF.REQUEST_ID)
         var fidoAuthRequest: String? = params.getString(IXUAF.AUTH_REQUEST)
-        if (fidoAuthRequest == null && mSingleShotRequest != null) {
-            LogUtils.logVerbose(null, TAG, "fidoAuthRequest = mSingleShotRequest")
-            fidoAuthRequest = mSingleShotRequest
-        }
+
         val request = JSONObject()
         request.put("fidoAuthenticationResponse", fidoAuthResponse)
-        if (mAuthRequestId == null) {
-            //mAuthRequestId is null for SingleShot request
+        if (authRequestId == null) {
+            //authRequestId is null for SingleShot request
             //making the SingleShot request here
             request.put("fidoAuthenticationRequest", fidoAuthRequest)
             val policy = JSONObject()
@@ -355,7 +359,7 @@ class RestService private constructor(private val context: Context, params: Bund
         return request.toString()
     }
 
-    fun serviceUpdate(params: Bundle): Response {
+    override suspend fun serviceUpdate(params: Bundle): Response {
         LogUtils.logVerbose(null, TAG, "RestService serviceUpdate")
         val response = params.getString(IXUAF.SERVER_DATA)
         val uafRequests: Array<UafProtocolMessageBase> = UafMessageUtils.validateUafMessage(
@@ -368,7 +372,7 @@ class RestService private constructor(private val context: Context, params: Bund
         }
     }
 
-    fun serviceRequestDeregistration(params: Bundle): Response {
+    override suspend fun serviceRequestDeregistration(params: Bundle): Response {
         LogUtils.logVerbose(null, TAG, "RestService serviceRequestDeregistration")
         val username = params.getString(IXUAF.USERNAME)
         val aaid = params.getString(IXUAF.AAID)
@@ -493,11 +497,12 @@ class RestService private constructor(private val context: Context, params: Bund
         }
     }
 
-    fun serviceUpdateAttempt(params: Bundle): Response {
+    override suspend fun serviceUpdateAttempt(params: Bundle): Response {
         LogUtils.logVerbose(null, TAG, "RestService serviceUpdateAttempt")
         val paramId = params.getString(VerificationAttemptParameters.PARAM_USER_AUTH_KEY_ID)
         val paramErrorCode = params.getInt(VerificationAttemptParameters.PARAM_ERROR_CODE)
         val paramScore = params.getDouble(VerificationAttemptParameters.PARAM_SCORE)
+        val authRequestId = params.getString(IXUAF.REQUEST_ID)
 
         val attempts = JSONObject()
         attempts.put(AUTHKEYID, paramId)
@@ -505,10 +510,10 @@ class RestService private constructor(private val context: Context, params: Bund
         attempts.put(SCORE, paramScore)
 
         val request = JSONObject()
-        request.put(ID, mAuthRequestId)
+        request.put(ID, authRequestId)
         request.put(FAILEDCLIENTATTEMPT, attempts)
 
-        val httpUrl = "$AUTHENTICATIONREQUESTS/$mAuthRequestId/appendFailedAttempt"
+        val httpUrl = "$AUTHENTICATIONREQUESTS/$authRequestId/appendFailedAttempt"
 
         when (val httpResponse = http.post(httpUrl, request.toString())) {
             is HTTP.Success -> {
@@ -537,7 +542,7 @@ class RestService private constructor(private val context: Context, params: Bund
         }
     }
 
-    fun serviceDeleteUser(params: Bundle): Response {
+    override suspend fun serviceDeleteUser(params: Bundle): Response {
         LogUtils.logVerbose(null, TAG, "RestService serviceDeleteUser")
         val username = params.getString(IXUAF.USERNAME)
         if (username != null) return archiveUser(username)

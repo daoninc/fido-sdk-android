@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">RelyingParty</string>
     <string name="action_step_up_auth">Step-up Auth</string>
+    <string name="action_single_shot">Single-shot Auth</string>
     <string name="action_manage_authenticators">Authenticators</string>
     <string name="action_delete">Delete</string>
     <string name="transaction_validation_success">Transaction validated successfully</string>

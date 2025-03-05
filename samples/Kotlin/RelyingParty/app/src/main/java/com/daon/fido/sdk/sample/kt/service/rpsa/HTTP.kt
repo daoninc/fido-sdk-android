@@ -15,15 +15,9 @@ class HTTP(private val params: Bundle) {
     data class Success(val payload: String?, val httpStatusCode: Int) : HttpResponse()
     data class Error(val code: Int, val message: String) : HttpResponse()
 
-    private var sessionId: String? = null
-
-    fun setSessionId(id: String?) {
-        sessionId = id
-    }
-
-    fun get(relativeUrl: String): HttpResponse {
+    fun get(relativeUrl: String, sessionId: String?): HttpResponse {
         try {
-            val urlConnection = createConnection(relativeUrl, GET_METHOD, false)
+            val urlConnection = createConnection(relativeUrl, GET_METHOD, false, sessionId)
             val httpResult = urlConnection.responseCode
             val response: String =
                 if (httpResult == HttpURLConnection.HTTP_CREATED || httpResult == HttpURLConnection.HTTP_OK) {
@@ -44,12 +38,13 @@ class HTTP(private val params: Bundle) {
     }
 
 
-    fun post(relativeUrl: String, payload: String): HttpResponse {
+    fun post(relativeUrl: String, payload: String, sessionId: String?): HttpResponse {
         try {
-            val urlConnection = createConnection(relativeUrl, POST_METHOD, true)
-            val outputStreamWriter = OutputStreamWriter(urlConnection.outputStream)
-            outputStreamWriter.write(payload)
-            outputStreamWriter.close()
+            val urlConnection = createConnection(relativeUrl, POST_METHOD, true, sessionId)
+
+            OutputStreamWriter(urlConnection.outputStream).use {
+                it.write(payload)
+            }
 
             val httpResult = urlConnection.responseCode
             val response: String =
@@ -71,20 +66,19 @@ class HTTP(private val params: Bundle) {
     }
 
     private fun createConnection(
-        relativeUrl: String, method: String, output: Boolean
+        relativeUrl: String, method: String, output: Boolean, sessionId: String?
     ): HttpURLConnection {
         val url = URL(getAbsoluteUrl(relativeUrl))
         LogUtils.logVerbose(null, "IXUAF_KT", "createConnection URL :$url")
-        val httpURLConnection: HttpURLConnection = url.openConnection() as HttpURLConnection
-        httpURLConnection.doOutput = output
-        httpURLConnection.requestMethod = method
-        httpURLConnection.useCaches = false
-        httpURLConnection.connectTimeout = CONNECTION_TIMEOUT
-        httpURLConnection.readTimeout = READ_TIMEOUT
-        httpURLConnection.setRequestProperty(CONTENT_TYPE_HEADER, CONTENT_TYPE)
-        //ToDO - check for SessionId null
-        httpURLConnection.setRequestProperty(SESSION_IDENTIFIER_HEADER, sessionId)
-        httpURLConnection.connect()
+        val httpURLConnection = (url.openConnection() as HttpURLConnection).apply {
+            doOutput = output
+            requestMethod = method
+            useCaches = false
+            connectTimeout = CONNECTION_TIMEOUT
+            readTimeout = READ_TIMEOUT
+            setRequestProperty(CONTENT_TYPE_HEADER, CONTENT_TYPE)
+            setRequestProperty(SESSION_IDENTIFIER_HEADER, sessionId)
+        }
         return httpURLConnection
     }
 
@@ -97,23 +91,18 @@ class HTTP(private val params: Bundle) {
     }
 
     private fun readStream(stream: InputStream): String {
-        val sb = StringBuilder()
-        val br = BufferedReader(InputStreamReader(stream, "utf-8"))
-        var line: String?
-        while (run {
-                line = br.readLine()
-                line
-            } != null) {
-            sb.append(line)
+
+        val lines = stream.use {
+            it.bufferedReader().readLines()
         }
-        br.close()
-        return sb.toString()
+
+        return lines.joinToString(" ")
     }
 
-    fun deleteResource(resource: String, resourceId: String, withOutput: Boolean): HttpResponse {
+    fun deleteResource(resource: String, resourceId: String, withOutput: Boolean, sessionId: String?): HttpResponse {
         val relativeUrl = "$resource/$resourceId"
         try {
-            val urlConnection = createConnection(relativeUrl, DELETE_METHOD, false)
+            val urlConnection = createConnection(relativeUrl, DELETE_METHOD, false, sessionId)
             val httpResult = urlConnection.responseCode
             if (httpResult == HttpURLConnection.HTTP_OK) {
                 if (withOutput) {

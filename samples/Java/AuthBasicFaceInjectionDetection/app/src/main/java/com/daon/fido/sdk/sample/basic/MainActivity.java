@@ -21,7 +21,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.daon.fido.sdk.sample.basic.databinding.ActivityMainBinding;
 import com.daon.fido.sdk.sample.basic.ui.intro.IntroActivity;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends EdgeToEdgeActivity {
     private ActivityMainBinding viewBinding;
 
     @Override

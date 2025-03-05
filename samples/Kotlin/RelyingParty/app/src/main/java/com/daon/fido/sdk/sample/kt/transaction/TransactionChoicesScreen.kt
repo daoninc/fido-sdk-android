@@ -38,7 +38,8 @@ fun TransactionChoicesScreen(onNavigateUp: () -> Unit, viewModel: HomeViewModel)
                 backgroundColor = MaterialTheme.colors.background,
                 title = { Text("Select the authenticator")}
             )
-        }
+        },
+        modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars),
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),

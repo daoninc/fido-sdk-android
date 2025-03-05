@@ -51,14 +51,16 @@ data class FidoUiState(
 // Data class representing the result of an account creation operation
 data class AccountCreationResult(
     val success: Boolean,
-    val message: String
+    val message: String,
+    val sessionId: String?
 )
 
 // Data class representing the result of a login operation
 data class LoginResult(
     val success: Boolean,
     val message: String,
-    val code: Int
+    val code: Int,
+    val sessionId: String?
 )
 
 // Data class representing the result of a FIDO initialization operation
@@ -240,6 +242,7 @@ class IntroViewModel @Inject constructor(application: Application, private val f
                             accountCreationResult = AccountCreationResult(
                                 success = true,
                                 message = "Account created successfully",
+                                sessionId = response.params.getString("sessionId")
                             )
                         )
                     }
@@ -254,6 +257,7 @@ class IntroViewModel @Inject constructor(application: Application, private val f
                                 message = "Account creation failed with " +
                                         "error code ${response.params.getInt(IXUAF.ERROR_CODE)} and " +
                                         "message ${response.params.getString(IXUAF.ERROR_MESSAGE)}",
+                                sessionId = null
                             )
                         )
                     }
@@ -287,7 +291,8 @@ class IntroViewModel @Inject constructor(application: Application, private val f
             when (val response = fido.authenticate(bundle)) {
 
                 is Success -> {
-                    val username = response.params.getString(IXUAF.EMAIL)
+                    val username = response.params.getString(IXUAF.EMAIL) ?: prefs.getString("currentUser", null)
+                    val sessionId = response.params.getString("sessionId")
                     val editor = prefs.edit()
                     editor.putString("currentUser", username)
                     editor.apply()
@@ -299,6 +304,7 @@ class IntroViewModel @Inject constructor(application: Application, private val f
                                 success = true,
                                 message = "Authentication success",
                                 code = 0,
+                                sessionId = sessionId
                             )
                         )
                     }
@@ -315,6 +321,7 @@ class IntroViewModel @Inject constructor(application: Application, private val f
                                 success = false,
                                 message = response.params.getString(IXUAF.ERROR_MESSAGE).toString(),
                                 code = response.params.getInt(IXUAF.ERROR_CODE),
+                                sessionId = response.params.getString("sessionId")
                             )
                         )
                     }

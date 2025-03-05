@@ -32,7 +32,8 @@ import com.daon.fido.sdk.sample.kt.util.CircularIndeterminateProgressBar
 @Composable
 fun HomeScreen(
     user: String,
-    onNavigateToRegistration: () -> Unit,
+    sessionId: String,
+    onNavigateToRegistration: (sessionId: String) -> Unit,
     backToIntro: () -> Unit,
     onNavigateToChooseAuth: (() -> Unit, ViewModel) -> Unit,
     onNavigateToPasscode: () -> Unit,
@@ -115,6 +116,7 @@ fun HomeScreen(
 
     DisposableEffect(key1 = viewModel) {
         viewModel.onStart()
+        viewModel.setSessionId(sessionId)
         onDispose {
             viewModel.onStop()
         }
@@ -140,7 +142,7 @@ fun HomeScreen(
         )
         Button(
             onClick = {
-                viewModel.authenticate()
+                viewModel.authenticate(false)
             }, shape = CutCornerShape(10), colors = ButtonDefaults.buttonColors(
                 backgroundColor = ButtonColor, contentColor = Color.White
             )
@@ -150,7 +152,17 @@ fun HomeScreen(
         Spacer(modifier = Modifier.height(height = 10.dp))
         Button(
             onClick = {
-                onNavigateToRegistration()
+                viewModel.authenticate(true)
+            }, shape = CutCornerShape(10), colors = ButtonDefaults.buttonColors(
+                backgroundColor = ButtonColor, contentColor = Color.White
+            )
+        ) {
+            Text(text = stringResource(R.string.action_single_shot))
+        }
+        Spacer(modifier = Modifier.height(height = 10.dp))
+        Button(
+            onClick = {
+                onNavigateToRegistration(sessionId)
             }, shape = CutCornerShape(10), colors = ButtonDefaults.buttonColors(
                 backgroundColor = ButtonColor, contentColor = Color.White
             )

@@ -59,6 +59,7 @@
     <string name="face_verify_warning">Detecting multiple failed matches, please adjust your device or lighting condition and try again</string>
     <string name="photo_retake">Retake</string>
     <string name="photo_take">Take Photo</string>
+    <string name="enroll_button">Enroll</string>
     <string name="face_camera_access_denied">Camera access denied. Face capture cannot proceed.</string>
     <string name="face_liveness_hmd_face_not_detected">No face detected</string>
     <string name="face_liveness_hmd_face_not_centered">Center face</string>

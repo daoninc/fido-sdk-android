@@ -25,6 +25,9 @@ import com.daon.fido.sdk.sample.kt.util.LockScreenOrientation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 
 /**
  * FingerprintScreen handles the UI for the fingerprint capture process.
@@ -38,6 +41,7 @@ fun FingerprintScreen(
     val fingerprintViewModel = hiltViewModel<FingerprintViewModel>()
 
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     //Handle fingerprint capture completion
     LaunchedEffect(key1 = fingerprintViewModel.captureComplete) {
@@ -51,19 +55,24 @@ fun FingerprintScreen(
     }
 
     //Handle fingerprint capture start and stop
-    DisposableEffect(key1 = fingerprintViewModel ) {
-        scope.launch {
-            delay(100)
-            fingerprintViewModel.onStart(context)
+    DisposableEffect(key1 = lifecycleOwner, effect = {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_START) {
+                fingerprintViewModel.onStart(context)
+            } else if (event == Lifecycle.Event.ON_STOP) {
+                fingerprintViewModel.onStop()
+            }
         }
+        lifecycleOwner.lifecycle.addObserver(observer)
+
         val activity = context as Activity
         activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
 
         onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
             activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-            fingerprintViewModel.onStop()
         }
-    }
+    })
 
     //Collect the captureInfo state and display a toast message if it is not empty
     val captureInfo = fingerprintViewModel.captureInfo.collectAsState()

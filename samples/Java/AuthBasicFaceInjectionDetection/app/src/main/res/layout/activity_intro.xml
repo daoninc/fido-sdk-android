@@ -23,14 +23,6 @@
         android:textColor="#005685"
         android:textSize="50sp" />
 
-    <ProgressBar
-        android:id="@+id/intro_progress"
-        style="?android:attr/progressBarStyleLarge"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:visibility="gone" />
-
     <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/faceOnly"
         android:layout_width="wrap_content"
@@ -43,52 +35,64 @@
         android:textSize="20sp"
         android:textStyle="bold" />
 
-
-    <ScrollView
-        android:id="@+id/intro_form"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-        <LinearLayout
+        <ScrollView
+            android:id="@+id/intro_form"
             android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:orientation="vertical">
+
+                <Button
+                    android:id="@+id/loginFidoButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/standard_button"
+                    android:focusable="true"
+                    android:visibility="gone"
+                    android:text="@string/action_login_with_fido" />
+
+                <Button
+                    android:id="@+id/newAccountButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/standard_button"
+                    android:focusable="true"
+                    android:visibility="gone"
+                    android:text="@string/action_new_account" />
+
+                <Button
+                    android:id="@+id/resetButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/standard_button"
+                    android:focusable="true"
+                    android:visibility="gone"
+                    android:text="@string/action_reset" />
+
+            </LinearLayout>
+        </ScrollView>
+
+        <ProgressBar
+            android:id="@+id/intro_progress"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:orientation="vertical">
+            android:layout_marginBottom="8dp"
+            android:visibility="gone" />
 
-
-            <Button
-                android:id="@+id/loginFidoButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/standard_button"
-                android:focusable="true"
-                android:visibility="gone"
-                android:text="@string/action_login_with_fido" />
-
-
-            <Button
-                android:id="@+id/newAccountButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/standard_button"
-                android:focusable="true"
-                android:visibility="gone"
-                android:text="@string/action_new_account" />
-
-            <Button
-                android:id="@+id/resetButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/standard_button"
-                android:focusable="true"
-                android:visibility="gone"
-                android:text="@string/action_reset" />
-
-        </LinearLayout>
-    </ScrollView>
+    </FrameLayout>
 
 </LinearLayout>
-

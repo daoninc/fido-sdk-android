@@ -4,8 +4,11 @@
     import androidx.compose.foundation.layout.Arrangement
     import androidx.compose.foundation.layout.Column
     import androidx.compose.foundation.layout.Row
+    import androidx.compose.foundation.layout.WindowInsets
     import androidx.compose.foundation.layout.fillMaxWidth
     import androidx.compose.foundation.layout.padding
+    import androidx.compose.foundation.layout.systemBars
+    import androidx.compose.foundation.layout.windowInsetsPadding
     import androidx.compose.material.Button
     import androidx.compose.material.MaterialTheme
     import androidx.compose.material.Scaffold
@@ -40,7 +43,8 @@
                     backgroundColor = MaterialTheme.colors.background,
                     title = { Text("Transaction Confirmation")}
                 )
-            }
+            },
+            modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars)
         ) {
             Column(
                 modifier = Modifier

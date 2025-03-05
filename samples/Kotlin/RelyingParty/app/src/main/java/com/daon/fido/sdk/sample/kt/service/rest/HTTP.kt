@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.util.Base64
 import com.daon.sdk.crypto.log.LogUtils
 import java.io.*
-import java.lang.StringBuilder
 import java.net.HttpURLConnection
 import java.net.MalformedURLException
 import java.net.URL
@@ -22,10 +21,10 @@ class HTTP(private val params: Bundle) {
         try {
             val urlConnection: HttpURLConnection = createConnection(url, POST, true)
 
-            val out = OutputStreamWriter(urlConnection.outputStream)
-            out.write(payload)
-            out.flush()
-            out.close()
+            OutputStreamWriter(urlConnection.outputStream).use {
+                it.write(payload)
+                it.flush()
+            }
 
             val httpResult = urlConnection.responseCode
             val response: String =
@@ -72,16 +71,19 @@ class HTTP(private val params: Bundle) {
 
     private fun createConnection(url: String, method: String, output: Boolean): HttpURLConnection {
         @Suppress("NAME_SHADOWING") val url = URL(getAbsoluteUrl(url))
-        val urlConnection = url.openConnection() as HttpURLConnection
-        urlConnection.doOutput = output
-        urlConnection.requestMethod = method
-        urlConnection.useCaches = false
-        urlConnection.connectTimeout = CONNECTION_TIMEOUT
-        urlConnection.readTimeout = READ_TIMEOUT
-        urlConnection.setRequestProperty(CONTENT_TYPE_HEADER, CONTENT_TYPE)
-        urlConnection.setRequestProperty(ACCEPT_HEADER, ACCEPT_VALUE)
-        urlConnection.setRequestProperty(ACCEPT_ENCODING_HEADER, ACCEPT_ENCODING_VALUE)
-        urlConnection.setRequestProperty(CLIENT_TYPE_HEADER, CLIENT_TYPE_VALUE)
+
+        val urlConnection = (url.openConnection() as HttpURLConnection).apply {
+            doOutput = output
+            requestMethod = method
+            useCaches = false
+            connectTimeout = CONNECTION_TIMEOUT
+            readTimeout = READ_TIMEOUT
+
+            setRequestProperty(CONTENT_TYPE_HEADER, CONTENT_TYPE)
+            setRequestProperty(ACCEPT_HEADER, ACCEPT_VALUE)
+            setRequestProperty(ACCEPT_ENCODING_HEADER, ACCEPT_ENCODING_VALUE)
+            setRequestProperty(CLIENT_TYPE_HEADER, CLIENT_TYPE_VALUE)
+        }
 
         if(url.toString().startsWith("https")) {
             urlConnection.setRequestProperty("Authorization", getBasicAuth())
@@ -91,18 +93,10 @@ class HTTP(private val params: Bundle) {
     }
 
     private fun readStream(stream: InputStream): String {
-        val sb = StringBuilder()
-        val br = BufferedReader(InputStreamReader(stream, "utf-8"))
-        var line: String?
-
-        while (run {
-                line = br.readLine()
-                line
-            } != null) {
-            sb.append(line)
+        val lines = stream.use {
+            it.bufferedReader().readLines()
         }
-        br.close()
-        return sb.toString()
+        return lines.joinToString(" ")
     }
 
     private fun getBasicAuth(): String {

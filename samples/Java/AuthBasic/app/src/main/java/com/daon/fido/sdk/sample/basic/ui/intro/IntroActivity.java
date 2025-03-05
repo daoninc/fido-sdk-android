@@ -25,6 +25,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
+import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -43,6 +44,7 @@ import com.daon.fido.client.sdk.model.Authenticator;
 import com.daon.fido.client.sdk.state.Keys;
 import com.daon.fido.sdk.sample.basic.CustomApplication;
 import com.daon.fido.sdk.sample.basic.CustomCaptureFragmentFactory;
+import com.daon.fido.sdk.sample.basic.EdgeToEdgeActivity;
 import com.daon.fido.sdk.sample.basic.databinding.ActivityIntroBinding;
 import com.daon.fido.sdk.sample.basic.model.AuthenticationMethod;
 import com.daon.fido.sdk.sample.basic.network.tasks.UserSignupTask;
@@ -61,7 +63,7 @@ import java.util.List;
 /**
  * @noinspection SpellCheckingInspection
  */
-public class IntroActivity extends AppCompatActivity implements UserSignupTask.UserSignupResultListener {
+public class IntroActivity extends EdgeToEdgeActivity implements UserSignupTask.UserSignupResultListener {
     private static final String TAG = IntroActivity.class.getSimpleName();
     private PermissionHelper permissionHelper;
     private SharedPreferencesManager sharedPreferencesManager;

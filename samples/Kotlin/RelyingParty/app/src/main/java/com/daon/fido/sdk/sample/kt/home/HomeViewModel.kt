@@ -71,6 +71,8 @@ class HomeViewModel @Inject constructor(application: Application, private val fi
     private var _inProgress = MutableStateFlow(false)
     val inProgress = _inProgress.asStateFlow()
 
+    private var sessionId: String = ""
+
     // Called when the ViewModel is created
     fun onStart() {
         // Add listener for choosing an authenticator
@@ -109,13 +111,18 @@ class HomeViewModel @Inject constructor(application: Application, private val fi
     }
 
     // Authenticate the user
-    fun authenticate() {
+    fun authenticate(isSingleShot: Boolean) {
         _inProgress.value = true
         viewModelScope.launch(Dispatchers.Default) {
             val bundle = Bundle()
             val username = prefs.getString("currentUser", null)
             if (username != null) {
                 bundle.putString(IXUAF.USERNAME, username)
+            }
+            if (isSingleShot) {
+                bundle.putBoolean(IXUAF.SINGLE_SHOT, true)
+                //Creating SSAR in the comm layer needs APP_ID
+                bundle.putString(IXUAF.APP_ID, fido.getAppID())
             }
             //sample code to demonstrate an image shown as transaction confirmation content
             //bundle.putString(IXUAF.TRANSACTION_CONTENT_TYPE, "image/png")
@@ -124,6 +131,7 @@ class HomeViewModel @Inject constructor(application: Application, private val fi
             //And here the transaction content is text
             bundle.putString(IXUAF.TRANSACTION_CONTENT_TYPE, "text/plain")
             bundle.putString(IXUAF.TRANSACTION_CONTENT_DATA, getResourceString(R.string.transaction_text_content))
+            bundle.putString("sessionId", sessionId)
             when (val response = fido.authenticate(bundle)) {
                 is Success -> {
                     // Handle successful authentication
@@ -157,7 +165,7 @@ class HomeViewModel @Inject constructor(application: Application, private val fi
         viewModelScope.launch {
             when (fido.reset(fido.getAppID(), username)) {
                 is Success -> {
-                    Log.d("DAON", "Reset Fido Success")
+                    Log.d("DAON", "Reset Fido Success :" + fido.isInitialised())
                     _transactionState.update { currentTransactionState ->
                         currentTransactionState.copy(resetComplete = true)
                     }
@@ -173,8 +181,11 @@ class HomeViewModel @Inject constructor(application: Application, private val fi
     //Archive the current user
     private fun deleteUser() {
         val username = prefs.getString("currentUser", null)
+        val bundle = Bundle().apply {
+            this.putString("sessionId", sessionId)
+        }
         viewModelScope.launch {
-            when (fido.deleteUser(username, Bundle())) {
+            when (fido.deleteUser(username, bundle)) {
                 is Success -> {
                     Log.d("DAON", "Delete User Success")
                     reset()
@@ -289,6 +300,10 @@ class HomeViewModel @Inject constructor(application: Application, private val fi
         _transactionState.update { currentTransactionState ->
             currentTransactionState.copy(confirmationOTPReceived = false, confirmationOTP = null)
         }
+    }
+
+    fun setSessionId(sessionId: String) {
+        this.sessionId = sessionId
     }
 
 }

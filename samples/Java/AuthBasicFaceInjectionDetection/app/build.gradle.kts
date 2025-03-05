@@ -4,12 +4,12 @@ plugins {
 }
 
 android {
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.daon.fido.sdk.sample.basic"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -39,7 +39,7 @@ dependencies {
     implementation(libs.daon.fido.device)
     implementation(libs.daon.fido.crypto)
 
-    implementation(libs.daon.fido.auth.common)
+    //implementation(libs.daon.fido.auth.common)
     implementation(libs.daon.fido.auth.authenticator)
     implementation(libs.daon.fido.auth.face.ifp)
 

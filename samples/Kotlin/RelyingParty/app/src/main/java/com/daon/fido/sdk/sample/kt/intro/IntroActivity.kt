@@ -2,6 +2,7 @@ package com.daon.fido.sdk.sample.kt.intro
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
@@ -38,6 +39,7 @@ import dagger.hilt.android.AndroidEntryPoint
 class IntroActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         setContent {
@@ -65,7 +67,7 @@ class IntroActivity : AppCompatActivity() {
                         // Composable for the Intro screen
                         composable(route = Screen.Intro.route) {
                             IntroScreen(
-                                onNavigateToHome = {user: String -> navController.navigate(Screen.Home.createRoute(user))},
+                                onNavigateToHome = {user: String, sessionId: String -> navController.navigate(Screen.Home.createRoute(user, sessionId))},
                                 onNavigateToChooseAuth = {
                                         navigateUp: () -> Unit, viewModel: ViewModel ->
                                     navController.navigate(
@@ -87,10 +89,13 @@ class IntroActivity : AppCompatActivity() {
 
                         // Composable for the Home screen
                         composable(Screen.Home.route) {
-                            it.arguments?.getString("user")?.let { it1 ->
+                            val user = it.arguments?.getString("user")
+                            val sessionId = it.arguments?.getString("sessionId")
+                            if (user != null && sessionId != null) {
                                 HomeScreen(
-                                    it1,
-                                    onNavigateToRegistration = { navController.navigate(Screen.Registration.route) },
+                                    user,
+                                    sessionId,
+                                    onNavigateToRegistration = { sessionId: String -> navController.navigate(Screen.Registration.createRoute(sessionId)) },
                                     backToIntro = { navController.navigate(Screen.Intro.route) {
                                         popUpTo(navController.graph.id) {
                                             inclusive = true
@@ -180,19 +185,23 @@ class IntroActivity : AppCompatActivity() {
         navigation(startDestination = Screen.Authenticators.route, route = Screen.Registration.route) {
             // Composable for the Authenticators screen
             composable(Screen.Authenticators.route) {
-                AuthenticatorsScreen(
-                    onNavigateToChooseAuth = { navigateUp: () -> Unit, viewModel: ViewModel ->
-                        navController.navigate(
-                            Screen.RegistrationAuths.createRoute(
-                                navigateUp, viewModel
-                            ),
-                        )
-                    },
-                    onNavigateToPasscode = { navController.navigate(Screen.Passcode.route) },
-                    onNavigateToFace = { navController.navigate(Screen.Face.route)},
-                    onNavigateToFingerprint = { navController.navigate(Screen.Fingerprint.route)},
-                    onNavigateUp = { navController.popBackStack() },
-                )
+                val sessionId = it.arguments?.getString("sessionId")
+                if (sessionId != null) {
+                    AuthenticatorsScreen(
+                        sessionId = sessionId,
+                        onNavigateToChooseAuth = { navigateUp: () -> Unit, viewModel: ViewModel ->
+                            navController.navigate(
+                                Screen.RegistrationAuths.createRoute(
+                                    navigateUp, viewModel
+                                ),
+                            )
+                        },
+                        onNavigateToPasscode = { navController.navigate(Screen.Passcode.route) },
+                        onNavigateToFace = { navController.navigate(Screen.Face.route) },
+                        onNavigateToFingerprint = { navController.navigate(Screen.Fingerprint.route) },
+                        onNavigateUp = { navController.popBackStack() },
+                    )
+                }
             }
 
             // Composable for the RegistrationAuths screen
@@ -208,12 +217,16 @@ class IntroActivity : AppCompatActivity() {
 // Sealed class representing different screens in the app
 sealed class Screen(val route: String) {
     data object Intro: Screen("intro")
-    data object Home: Screen("home/{user}") {
-        fun createRoute(user: String) = "home/$user"
+    data object Home: Screen("home/{user}/{sessionId}") {
+        fun createRoute(user: String, sessionId: String) = "home/$user/$sessionId"
     }
     data object Passcode: Screen("passcode")
-    data object Registration: Screen("registration")
-    data object Authenticators: Screen("authenticators")
+    data object Registration: Screen("registration/{sessionId}") {
+        fun createRoute(sessionId: String) = "registration/$sessionId"
+    }
+    data object Authenticators: Screen("authenticators/{sessionId}") {
+        fun createRoute(sessionId: String) = "authenticators/$sessionId"
+    }
     data object RegistrationAuths: Screen("registrationAuths/{navigateUp}/{viewModel}") {
         fun createRoute(
             navigateUp: () -> Unit,

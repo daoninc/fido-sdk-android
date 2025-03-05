@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
@@ -62,6 +64,7 @@ import com.daon.fido.sdk.sample.kt.util.CircularIndeterminateProgressBar
  */
 @Composable
 fun AuthenticatorsScreen(
+    sessionId: String,
     onNavigateToChooseAuth: (() -> Unit, ViewModel) -> Unit,
     onNavigateToPasscode: () -> Unit,
     onNavigateToFace: () -> Unit,
@@ -132,6 +135,7 @@ fun AuthenticatorsScreen(
 
     DisposableEffect(key1 = viewModel) {
         viewModel.onStart()
+        viewModel.setSessionId(sessionId)
         onDispose {
             viewModel.onStop()
         }
@@ -141,7 +145,7 @@ fun AuthenticatorsScreen(
     Scaffold(topBar = {
         TopAppBar(backgroundColor = MaterialTheme.colors.background,
             title = { Text("Registered authenticators") })
-    }) {
+    }, modifier = Modifier.safeDrawingPadding()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

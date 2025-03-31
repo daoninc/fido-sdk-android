@@ -1,25 +1,37 @@
 package com.daon.fido.sdk.sample.kt.intro
 
 
-import android.graphics.BitmapFactory
-import android.util.Base64
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.*
-
+import androidx.compose.material.Card
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Scaffold
+import androidx.compose.material.Text
+import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import com.daon.fido.client.sdk.model.Authenticator
+import com.daon.fido.client.sdk.Group
+import com.daon.fido.sdk.sample.kt.util.getBitmap
+import com.daon.fido.sdk.sample.kt.util.getGroupDescription
+import com.daon.fido.sdk.sample.kt.util.getGroupTitle
 
 /**
  *
@@ -28,9 +40,10 @@ import com.daon.fido.client.sdk.model.Authenticator
  */
 @Composable
 fun AuthenticationChoicesScreen(onNavigateUp: () -> Unit, viewModel: IntroViewModel) {
-    // Collect the AuthenticatorState from the ViewModel which includes the list of authenticators
+    // Collect the AuthenticatorState from the ViewModel which includes the policy
     val state = viewModel.uiState.collectAsState()
-    val authList: List<Authenticator> = state.value.authArray.toList()
+    val policy = state.value.policy
+    val groups = policy?.getGroups()
 
     // Screen layout
     Scaffold(
@@ -42,14 +55,13 @@ fun AuthenticationChoicesScreen(onNavigateUp: () -> Unit, viewModel: IntroViewMo
         },
         modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars)
     ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = it
-        ) {
-            items(authList) { auth ->
-                AuthCard(authenticator = auth, onNavigateUp, viewModel)
-
-            }
+        if (groups != null) {
+            GroupList(
+                groups,
+                onNavigateUp,
+                viewModel,
+                it
+            )
         }
     }
 
@@ -62,7 +74,20 @@ fun AuthenticationChoicesScreen(onNavigateUp: () -> Unit, viewModel: IntroViewMo
 }
 
 @Composable
-fun AuthCard(authenticator: Authenticator, onNavigateUp: () -> Unit, viewModel: IntroViewModel) {
+fun GroupList(groups: Array<Group>, onNavigateUp: () -> Unit, viewModel: IntroViewModel, padding: PaddingValues) {
+    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = padding) {
+        items(groups) { group ->
+            AuthCard(
+                group,
+                onNavigateUp,
+                viewModel
+            )
+        }
+    }
+}
+
+@Composable
+fun AuthCard(group: Group, onNavigateUp: () -> Unit, viewModel: IntroViewModel) {
     // Card layout for each authenticator item
     Card(
         modifier = Modifier
@@ -71,7 +96,7 @@ fun AuthCard(authenticator: Authenticator, onNavigateUp: () -> Unit, viewModel: 
             .wrapContentHeight()
             .clickable {
                 // Update the selected authenticator and navigate back
-                viewModel.updateSelectedAuth(authenticator)
+                viewModel.updateSelectedGroup(group)
                 onNavigateUp()
             },
         shape = MaterialTheme.shapes.medium,
@@ -80,22 +105,22 @@ fun AuthCard(authenticator: Authenticator, onNavigateUp: () -> Unit, viewModel: 
           verticalAlignment = Alignment.CenterVertically
         ) {
             // Display the authenticator icon if available
-            getBitmap(authenticator.icon)?.let { Image(
-                bitmap = it,
+            Image(
+                bitmap = getBitmap(group.getAuthenticator().icon),
                 contentDescription = " ",
-            modifier = Modifier
+                modifier = Modifier
                 .size(60.dp)
                 .padding(6.dp),
-            contentScale = ContentScale.Fit) }
+                contentScale = ContentScale.Fit)
             // Display the authenticator title and description
             Column(Modifier.padding(8.dp)) {
                 Text(
-                   text = authenticator.title,
+                   text = getGroupTitle(group),
                    style = MaterialTheme.typography.h6,
                    color = MaterialTheme.colors.onSurface
                 )
                 Text (
-                    text = authenticator.description ,
+                    text = getGroupDescription(group) ,
                     style = MaterialTheme.typography.body2
                 )
             }
@@ -104,12 +129,4 @@ fun AuthCard(authenticator: Authenticator, onNavigateUp: () -> Unit, viewModel: 
     }
 }
 
-// Get the ImageBitmap from the base64 encoded string
-fun getBitmap(icon: String): ImageBitmap {
-    val options = BitmapFactory.Options()
-    options.inMutable = true
-    val commaIndex = icon.indexOf(',')
-    val imageBase64 = icon.substring(commaIndex + 1)
-    val imgBytes = Base64.decode(imageBase64, Base64.DEFAULT)
-    return BitmapFactory.decodeByteArray(imgBytes, 0, imgBytes.size, options).asImageBitmap()
-}
+

@@ -3,14 +3,18 @@ package com.daon.fido.sdk.sample.kt.fingerprint
 import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -19,46 +23,31 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.daon.fido.sdk.sample.kt.R
-import com.daon.fido.sdk.sample.kt.ui.theme.ButtonColor
-import com.daon.fido.sdk.sample.kt.util.LockScreenOrientation
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import androidx.compose.runtime.collectAsState
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.daon.fido.sdk.sample.kt.R
+import com.daon.fido.sdk.sample.kt.ui.theme.ButtonColor
+import com.daon.sdk.authenticator.controller.FingerprintCaptureControllerProtocol
 
 /**
  * FingerprintScreen handles the UI for the fingerprint capture process.
  */
 @Composable
 fun FingerprintScreen(
-    onNavigateUp: () -> Unit
+    onNavigateUp: () -> Unit,
+    fingerprintController: FingerprintCaptureControllerProtocol
 ) {
-
-    val scope = rememberCoroutineScope()
     val fingerprintViewModel = hiltViewModel<FingerprintViewModel>()
 
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    //Handle fingerprint capture completion
-    LaunchedEffect(key1 = fingerprintViewModel.captureComplete) {
-        fingerprintViewModel.captureComplete.collect { captureComplete ->
-            if (captureComplete) {
-                fingerprintViewModel.resetCaptureComplete()
-                onNavigateUp()
-            }
-
-        }
-    }
-
     //Handle fingerprint capture start and stop
     DisposableEffect(key1 = lifecycleOwner, effect = {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_START) {
-                fingerprintViewModel.onStart(context)
+            if (event == Lifecycle.Event.ON_RESUME) {
+                fingerprintViewModel.onStart(context, fingerprintController)
             } else if (event == Lifecycle.Event.ON_STOP) {
                 fingerprintViewModel.onStop()
             }
@@ -79,6 +68,20 @@ fun FingerprintScreen(
     if (captureInfo.value.isNotEmpty()) {
         Toast.makeText(context, captureInfo.value, Toast.LENGTH_SHORT).show()
         fingerprintViewModel.resetCaptureInfo()
+    }
+
+    //Handle fingerprint capture completion
+    val captureComplete = fingerprintViewModel.captureComplete.collectAsState()
+    if (captureComplete.value) {
+        fingerprintViewModel.resetCaptureComplete()
+        onNavigateUp()
+    }
+
+    // Handle back button press
+    BackHandler {
+        //Cancel the ongoing fido operation and capture controller
+        fingerprintViewModel.cancelCurrentOperation()
+        onNavigateUp()
     }
 
     // fingerprint capture UI

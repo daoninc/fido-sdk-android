@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.NavHost
@@ -18,17 +19,19 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import com.daon.fido.sdk.sample.kt.authenticators.AuthenticatorsScreen
 import com.daon.fido.sdk.sample.kt.authenticators.AuthenticatorsViewModel
-import com.daon.fido.sdk.sample.kt.util.FidoAppState
 import com.daon.fido.sdk.sample.kt.authenticators.RegistrationChoicesScreen
-import com.daon.fido.sdk.sample.kt.transaction.TransactionChoicesScreen
-import com.daon.fido.sdk.sample.kt.transaction.TransactionConfirmationScreen
 import com.daon.fido.sdk.sample.kt.face.FaceScreen
 import com.daon.fido.sdk.sample.kt.fingerprint.FingerprintScreen
 import com.daon.fido.sdk.sample.kt.home.HomeScreen
 import com.daon.fido.sdk.sample.kt.home.HomeViewModel
 import com.daon.fido.sdk.sample.kt.passcode.PasscodeScreen
-import com.daon.fido.sdk.sample.kt.util.rememberFidoAppState
+import com.daon.fido.sdk.sample.kt.transaction.TransactionChoicesScreen
+import com.daon.fido.sdk.sample.kt.transaction.TransactionConfirmationScreen
 import com.daon.fido.sdk.sample.kt.ui.theme.IdentityxandroidsdkfidoTheme
+import com.daon.fido.sdk.sample.kt.util.FidoAppState
+import com.daon.fido.sdk.sample.kt.util.rememberFidoAppState
+import com.daon.sdk.authenticator.controller.PasscodeControllerProtocol
+import com.daon.sdk.faceauthenticator.controller.FaceControllerProtocol
 import dagger.hilt.android.AndroidEntryPoint
 
 /*
@@ -126,23 +129,69 @@ class IntroActivity : AppCompatActivity() {
 
                     // Composable for the Passcode screen
                     composable(Screen.Passcode.route) {
-                        PasscodeScreen(onNavigateUp = { navController.popBackStack()})
-                    }
+                        val previousBackStackEntry = navController.previousBackStackEntry
+                        val passcodeController = when (previousBackStackEntry?.destination?.route) {
+                            Screen.Authenticators.route ->  hiltViewModel<AuthenticatorsViewModel>(previousBackStackEntry).getPasscodeController()
+                            Screen.Intro.route -> hiltViewModel<IntroViewModel>(previousBackStackEntry).getPasscodeController()
+                            Screen.Home.route -> hiltViewModel<HomeViewModel>(previousBackStackEntry).getPasscodeController()
+                            else -> null
+                        }
+                        passcodeController?.let {
+                            PasscodeScreen(
+                                onNavigateUp = { navController.popBackStack() },
+                                passcodeController = it
+                            )
 
+                        }
+                    }
                     // Composable for the Face screen
                     composable(Screen.Face.route) {
-                        val parentEntry = remember(it) { navController.getBackStackEntry(Screen.Intro.route) }
-                        val parentViewModel = hiltViewModel<IntroViewModel>(parentEntry)
-                        FaceScreen(onNavigateUp = { navController.popBackStack()}, parentViewModel,
-                            onNavigateToAccounts = {navigateUp: () -> Unit, viewModel: ViewModel ->
-                                navController.navigate(
-                                    Screen.Accounts.createRoute(
-                                        navigateUp, viewModel))})
+                        val parentEntry: NavBackStackEntry?
+                        var parentViewModel: IntroViewModel? = null
+                        var faceController: FaceControllerProtocol? = null
+                        val previousBackStackEntry = remember(it) { navController.previousBackStackEntry }
+
+                        if (previousBackStackEntry?.destination?.route == Screen.Authenticators.route) {
+                            parentEntry = previousBackStackEntry
+                            faceController = hiltViewModel<AuthenticatorsViewModel>(parentEntry).getFaceController()
+                        } else if (previousBackStackEntry?.destination?.route == Screen.Intro.route) {
+                            parentEntry = previousBackStackEntry
+                            parentViewModel = hiltViewModel<IntroViewModel>(parentEntry)
+                            faceController = hiltViewModel<IntroViewModel>(parentEntry).getFaceController()
+                        } else if (previousBackStackEntry?.destination?.route == Screen.Home.route) {
+                            parentEntry = previousBackStackEntry
+                            faceController = hiltViewModel<HomeViewModel>(parentEntry).getFaceController()
+                        }
+                        faceController?.let {controller ->
+                                FaceScreen(
+                                    onNavigateUp = { navController.popBackStack() },
+                                    introViewModel = parentViewModel,
+                                    onNavigateToAccounts = { navigateUp: () -> Unit, viewModel: ViewModel ->
+                                        navController.navigate(
+                                            Screen.Accounts.createRoute(
+                                                navigateUp, viewModel))},
+                                    faceController = controller
+                                )
+                        }
                     }
 
                     // Composable for the Fingerprint screen
                     composable(Screen.Fingerprint.route) {
-                        FingerprintScreen (onNavigateUp = { navController.popBackStack()})
+                        val previousBackStackEntry = remember(it) { navController.previousBackStackEntry }
+
+                        val fingerController = when (previousBackStackEntry?.destination?.route) {
+                            Screen.Authenticators.route -> hiltViewModel<AuthenticatorsViewModel>(previousBackStackEntry).getFingerprintController()
+                            Screen.Intro.route -> hiltViewModel<IntroViewModel>(previousBackStackEntry).getFingerprintController()
+                            Screen.Home.route -> hiltViewModel<HomeViewModel>(previousBackStackEntry).getFingerprintController()
+                            else -> null
+                        }
+
+                        fingerController?.let {
+                            FingerprintScreen (
+                                onNavigateUp = { navController.popBackStack()},
+                                fingerprintController = it)
+                        }
+
                     }
 
                     //Navigation graph for the registration flow

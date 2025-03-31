@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
+import com.daon.fido.client.sdk.Group
 import com.daon.fido.sdk.sample.kt.R
 import com.daon.fido.sdk.sample.kt.model.*
 import com.daon.fido.sdk.sample.kt.ui.theme.ButtonColor
@@ -53,24 +54,54 @@ fun HomeScreen(
     LaunchedEffect(key1 = viewModel.transactionState) {
         viewModel.transactionState.collect { transactionState ->
             // Handle the authentication choices
-            if (transactionState.authArrayAvailable) {
-                onNavigateToChooseAuth(onNavigateUp, viewModel)
+            if (transactionState.policyAvailable) {
+                // For multi-factor authentication, if an authenticator group is already selected, navigate to the next authenticator.
+                // For non-multi-factor operations, isUpdate is always false.
+                val isUpdate = transactionState.policy?.isUpdate()
+                if (isUpdate == true) {
+                    val groups: Array<Group>? = transactionState.policy.getGroups()
+                    groups?.let {groups ->
+                        if (groups.isNotEmpty()) {
+                            viewModel.updateSelectedGroup(groups[0])
+                        }
+                    }
+                } else {
+                    onNavigateToChooseAuth(onNavigateUp, viewModel)
+                }
             }
 
             // Handle the authentication selection
-            if (transactionState.authSelected) {
+            if (transactionState.groupSelected) {
                 viewModel.deselectAuth()
-                when (transactionState.selectedAuth?.aaid) {
+                when (transactionState.group?.getAuthenticator()?.aaid) {
                     SRP_PASSCODE_AUTH_AAID, PASSCODE_AUTH_AAID -> {
-                        onNavigateToPasscode()
+                        val passcodeController  = viewModel.getPasscodeController()
+                        if (passcodeController != null) {
+                            onNavigateToPasscode()
+                        } else {
+                            viewModel.cancelCurrentOperation()
+                            Toast.makeText(context, "Passcode controller is not available", Toast.LENGTH_SHORT).show()
+                        }
                     }
 
                     FINGERPRINT_AUTH_AAID -> {
-                        onNavigateToFingerprint()
+                        val fingerprintController = viewModel.getFingerprintController()
+                        if (fingerprintController != null) {
+                            onNavigateToFingerprint()
+                        } else {
+                            viewModel.cancelCurrentOperation()
+                            Toast.makeText(context, "Fingerprint controller is not available", Toast.LENGTH_SHORT).show()
+                        }
                     }
 
                     FACE_AUTH_AAID, ADOS_FACE_AUTH_AAID -> {
-                        onNavigateToFace()
+                        val faceController = viewModel.getFaceController()
+                        if (faceController != null) {
+                            onNavigateToFace()
+                        } else {
+                            viewModel.cancelCurrentOperation()
+                            Toast.makeText(context, "Face controller is not available", Toast.LENGTH_SHORT).show()
+                        }
                     }
 
                     SILENT_AUTH_AAID -> {

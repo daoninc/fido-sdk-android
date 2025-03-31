@@ -17,20 +17,18 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.daon.fido.client.sdk.Group
 import com.daon.fido.sdk.sample.kt.model.ADOS_FACE_AUTH_AAID
 import com.daon.fido.sdk.sample.kt.model.FACE_AUTH_AAID
 import com.daon.fido.sdk.sample.kt.model.FINGERPRINT_AUTH_AAID
@@ -123,8 +121,19 @@ fun IntroScreen(
             }
 
             // Handle authentication choices
-            if (uiState.authArrayAvailable) {
-                onNavigateToChooseAuth(onNavigateUp, viewModel)
+            if (uiState.policyAvailable) {
+                val isUpdate = uiState.policy?.isUpdate()
+                if (isUpdate == true){
+                    val groups: Array<Group>? = uiState.policy.getGroups()
+                    groups?.let { groups ->
+                        if (groups.isNotEmpty()) {
+                            viewModel.updateSelectedGroup(groups[0])
+                        }
+                    }
+
+                } else {
+                    onNavigateToChooseAuth(onNavigateUp, viewModel)
+                }
             }
 
             // Handle account selection for non-ADoS authentication
@@ -138,22 +147,44 @@ fun IntroScreen(
             }
 
             // Handle authentication selection
-            if (uiState.authSelected) {
+            if (uiState.groupSelected) {
                 viewModel.deselectAuth()
-                val aaid = uiState.selectedAuth?.aaid
-                when (uiState.selectedAuth?.aaid) {
+                when (uiState.group?.getAuthenticator()?.aaid) {
 
                     SRP_PASSCODE_AUTH_AAID, PASSCODE_AUTH_AAID -> {
-                        if (aaid != null) {
+                        val passcodeController = viewModel.getPasscodeController()
+                        if (passcodeController != null) {
                             onNavigateToPasscode()
+                        } else {
+                            viewModel.cancelCurrentOperation()
+                            Toast.makeText(
+                                context,
+                                "Passcode controller is not available.",
+                                Toast.LENGTH_LONG).show()
                         }
                     }
                     FINGERPRINT_AUTH_AAID -> {
-                        onNavigateToFingerprint()
+                        val fingerprintController = viewModel.getFingerprintController()
+                        if (fingerprintController != null) {
+                            onNavigateToFingerprint()
+                        } else {
+                            viewModel.cancelCurrentOperation()
+                            Toast.makeText(
+                                context,
+                                "Fingerprint controller is not available.",
+                                Toast.LENGTH_LONG).show()
+                        }
                     }
                     FACE_AUTH_AAID, ADOS_FACE_AUTH_AAID -> {
-                        if (aaid != null) {
+                        val faceController = viewModel.getFaceController()
+                        if (faceController != null) {
                             onNavigateToFace(viewModel)
+                        } else {
+                            viewModel.cancelCurrentOperation()
+                            Toast.makeText(
+                                context,
+                                "Face controller is not available.",
+                                Toast.LENGTH_LONG).show()
                         }
                     }
                     SILENT_AUTH_AAID -> {

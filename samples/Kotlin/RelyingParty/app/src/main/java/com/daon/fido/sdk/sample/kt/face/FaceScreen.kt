@@ -8,12 +8,7 @@ import androidx.activity.compose.BackHandler
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.CircularProgressIndicator
@@ -44,7 +39,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
 import com.daon.fido.sdk.sample.kt.intro.IntroViewModel
 import com.daon.fido.sdk.sample.kt.ui.theme.ButtonColor
-import com.daon.fido.sdk.sample.kt.util.LockScreenOrientation
+import com.daon.sdk.faceauthenticator.controller.FaceControllerProtocol
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -52,13 +47,17 @@ import com.google.accompanist.permissions.rememberPermissionState
 /**
  * UI for the face capture process.
  * @param onNavigateUp: Callback function to handle navigation when face capture is complete.
+ * @param introViewModel: The intro view model to use for navigation to accounts screen for ADoS authenticators.
+ * @param onNavigateToAccounts: Callback function to navigate to accounts screen.
+ * @param faceController: The face controller to use for the face capture process.
  */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun FaceScreen(
     onNavigateUp: () -> Unit,
     introViewModel: IntroViewModel? = null,
-    onNavigateToAccounts: (() -> Unit, ViewModel) -> Unit
+    onNavigateToAccounts: (() -> Unit, ViewModel) -> Unit,
+    faceController: FaceControllerProtocol
 ) {
 
     val viewModel = hiltViewModel<FaceViewModel>()
@@ -99,7 +98,7 @@ fun FaceScreen(
 
             if (event == Lifecycle.Event.ON_RESUME) {
                 if (!isAccountChooserVisible) {
-                    viewModel.startCapture(lifecycleOwner, previewView)
+                    viewModel.startCapture(faceController, lifecycleOwner, previewView)
                 } else {
                     isAccountChooserVisible = false
                 }
@@ -139,7 +138,7 @@ fun FaceScreen(
 
     LaunchedEffect(key1 = uiState.recaptureEnabled) {
         if (uiState.recaptureEnabled) {
-            viewModel.onRecapture(lifecycleOwner, previewView)
+            viewModel.onRecapture(faceController, lifecycleOwner, previewView)
         }
     }
 
@@ -154,7 +153,7 @@ fun FaceScreen(
     ConstraintLayout(
         modifier = Modifier.fillMaxSize()
             .background(Color.Black)
-            .safeDrawingPadding()
+            .windowInsetsPadding(WindowInsets.systemBars)
     ) {
         val (previewLayout, buttonsLayout, infoTextView) = createRefs()
 

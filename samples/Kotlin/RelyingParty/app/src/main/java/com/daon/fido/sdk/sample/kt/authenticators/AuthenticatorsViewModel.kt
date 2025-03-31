@@ -8,17 +8,17 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.core.content.edit
 import androidx.lifecycle.viewModelScope
 import com.daon.fido.client.sdk.Failure
+import com.daon.fido.client.sdk.Group
 import com.daon.fido.client.sdk.IXUAF
+import com.daon.fido.client.sdk.Policy
 import com.daon.fido.client.sdk.Success
 import com.daon.fido.client.sdk.model.Authenticator
 import com.daon.fido.client.sdk.util.SDKPreferences
 import com.daon.fido.sdk.sample.kt.BaseViewModel
-import com.daon.fido.sdk.sample.kt.model.ADOS_VOICE_AUTH_AAID
-import com.daon.fido.sdk.sample.kt.model.OOTP_AUTH_AAID
-import com.daon.fido.sdk.sample.kt.model.PATTERN_AUTH_AAID
-import com.daon.fido.sdk.sample.kt.model.SILENT_AUTH_AAID
-import com.daon.fido.sdk.sample.kt.model.VOICE_AUTH_AAID
-import com.daon.sdk.authenticator.controller.CaptureControllerProtocol
+import com.daon.sdk.authenticator.controller.FingerprintCaptureControllerProtocol
+import com.daon.sdk.authenticator.controller.PasscodeControllerProtocol
+import com.daon.sdk.authenticator.exception.ControllerInitializationException
+import com.daon.sdk.faceauthenticator.controller.FaceControllerProtocol
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,15 +29,15 @@ import javax.inject.Inject
 
 // Data class to hold the state of the Authenticators screen.
 data class AuthenticatorState(
-    val authArray: Array<Authenticator>,
-    val authListAvailable: Boolean,
-    val authSelected: Boolean,
-    val selectedAuth: Authenticator?,
-    val authToDeregister: Authenticator?,
-    val selectedIndex: Int,
-    val registrationResult: RegistrationResult?,
-    val deregistrationResult: DeregistrationResult?,
-    val inProgress: Boolean
+    val policyAvailable: Boolean = false,
+    val policy: Policy? = null,
+    val groupSelected: Boolean = false,
+    val group: Group? = null,
+    val authToDeregister: Authenticator? = null,
+    val selectedIndex: Int = -1,
+    val registrationResult: RegistrationResult? = null,
+    val deregistrationResult: DeregistrationResult? = null,
+    val inProgress: Boolean = false
 )
 
 // Data classes to hold the result of registration.
@@ -59,19 +59,9 @@ class AuthenticatorsViewModel @Inject constructor(
     application: Application, private val fido: IXUAF, private val prefs: SharedPreferences
 ) : BaseViewModel(application) {
 
-    //Mutable and publiuc state flow to hold the state of the Authenticators screen.
+    //Mutable and public state flow to hold the state of the Authenticators screen.
     private val _authState = MutableStateFlow(
-        AuthenticatorState(
-            authArray = emptyArray<Authenticator>(),
-            authListAvailable = false,
-            authSelected = false,
-            selectedAuth = null,
-            authToDeregister = null,
-            selectedIndex = -1,
-            registrationResult = null,
-            deregistrationResult = null,
-            inProgress = false
-        )
+        AuthenticatorState()
     )
     val authState: StateFlow<AuthenticatorState> = _authState
 
@@ -87,40 +77,15 @@ class AuthenticatorsViewModel @Inject constructor(
     fun onStart() {
         //Add a listener to choose authenticator.
         fido.addChooseAuthenticatorListener {
-            filterAuthArray(it)
+            _authState.update { currentAuthState ->
+                currentAuthState.copy(
+                    policy = it, policyAvailable = true
+                )
+            }
         }
         //Discover available authenticators.
         discover()
 
-    }
-
-    //Filter the authenticators to remove the ones that are not supported.
-    private fun filterAuthArray(authArray: Array<Authenticator>) {
-        val resultArray = mutableStateListOf<Authenticator>()
-        for (auth in authArray) {
-            if (auth.aaid != VOICE_AUTH_AAID && auth.aaid != ADOS_VOICE_AUTH_AAID && auth.aaid != OOTP_AUTH_AAID && auth.aaid != PATTERN_AUTH_AAID) {
-                resultArray.add(auth)
-            }
-        }
-        Log.d("DAON", "filterAuthArray resultArray size : ${resultArray.size}")
-
-        //Update the state with the filtered authenticators.
-        if (resultArray.size == 0) {
-            _authState.update { currentAuthState ->
-                currentAuthState.copy(
-                    registrationResult = RegistrationResult(
-                        success = false, message = "No more authenticators available to register"
-                    )
-                )
-            }
-            cancelCurrentOperation()
-        } else {
-            _authState.update { currentAuthState ->
-                currentAuthState.copy(
-                    authArray = resultArray.toTypedArray(), authListAvailable = true
-                )
-            }
-        }
     }
 
     fun onStop() {
@@ -257,22 +222,22 @@ class AuthenticatorsViewModel @Inject constructor(
         }
     }
 
-    // Update authState with the selected authenticator.
-    fun updateSelectedAuth(auth: Authenticator) {
+    // Update the user selected authenticator group
+    fun updateSelectedGroup(group: Group) {
         _authState.update { currentAuthState ->
             currentAuthState.copy(
-                selectedAuth = auth, authSelected = true, authListAvailable = false
+                group = group, groupSelected = true, policyAvailable = false
             )
         }
         prefs.edit {
-            this.putString("selectedAaid", auth.aaid)
+            this.putString("selectedAaid", group.getAuthenticator().aaid)
         }
     }
 
     // Reset the list of authenticators available.
     fun resetAuthListAvailable() {
         _authState.update { currentAuthState ->
-            currentAuthState.copy(authListAvailable = false)
+            currentAuthState.copy(policyAvailable = false)
         }
     }
 
@@ -300,16 +265,57 @@ class AuthenticatorsViewModel @Inject constructor(
     // Reset the selected authenticator.
     fun deselectAuth() {
         _authState.update { currentAuthState ->
-            currentAuthState.copy(authSelected = false)
+            currentAuthState.copy(groupSelected = false)
+        }
+    }
+
+    fun resetInProgress() {
+        _authState.update { currentAuthState ->
+            currentAuthState.copy(inProgress = false)
         }
     }
 
     // Perform silent registration.
     fun registerSilent() {
-        val silentController =
-            fido.getController(getApplication(), SILENT_AUTH_AAID) as CaptureControllerProtocol
-        silentController.startCapture()
-        silentController.completeCapture()
+         try {
+            _authState.value.group?.let { group ->
+                val silentController = fido.getController(getApplication(), group)
+                silentController?.startCapture()
+                silentController?.completeCapture()
+            }
+        } catch (e: ControllerInitializationException) {
+
+        }
+    }
+
+    fun getPasscodeController(): PasscodeControllerProtocol? {
+        return try {
+            _authState.value.group?.let { selectedAuth ->
+                fido.getController(getApplication(), selectedAuth) as? PasscodeControllerProtocol
+            }
+        } catch (e: ControllerInitializationException) {
+            null
+        }
+    }
+
+    fun getFaceController(): FaceControllerProtocol? {
+        return try {
+            _authState.value.group?.let { group ->
+                fido.getController(getApplication(), group) as? FaceControllerProtocol
+            }
+        } catch (e: ControllerInitializationException) {
+            null
+        }
+    }
+
+    fun getFingerprintController(): FingerprintCaptureControllerProtocol? {
+        return try {
+            _authState.value.group?.let { group ->
+                fido.getController(getApplication(), group) as? FingerprintCaptureControllerProtocol
+            }
+        } catch (e: ControllerInitializationException) {
+            null
+        }
     }
 
     fun setSessionId(sessionId: String) {

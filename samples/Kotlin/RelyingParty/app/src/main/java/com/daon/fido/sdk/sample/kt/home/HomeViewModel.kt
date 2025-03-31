@@ -7,15 +7,18 @@ import android.util.Log
 import androidx.core.content.edit
 import androidx.lifecycle.viewModelScope
 import com.daon.fido.client.sdk.Failure
+import com.daon.fido.client.sdk.Group
 import com.daon.fido.client.sdk.IXUAF
+import com.daon.fido.client.sdk.Policy
 import com.daon.fido.client.sdk.Success
-import com.daon.fido.client.sdk.model.Authenticator
 import com.daon.fido.client.sdk.transaction.TransactionContent
 import com.daon.fido.client.sdk.transaction.TransactionUtils
 import com.daon.fido.sdk.sample.kt.BaseViewModel
 import com.daon.fido.sdk.sample.kt.R
-import com.daon.fido.sdk.sample.kt.model.SILENT_AUTH_AAID
-import com.daon.sdk.authenticator.controller.CaptureControllerProtocol
+import com.daon.sdk.authenticator.controller.FingerprintCaptureControllerProtocol
+import com.daon.sdk.authenticator.controller.PasscodeControllerProtocol
+import com.daon.sdk.authenticator.exception.ControllerInitializationException
+import com.daon.sdk.faceauthenticator.controller.FaceControllerProtocol
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,13 +30,13 @@ import javax.inject.Inject
 
 //Data class to hold the state of the transaction
 data class TransactionState(
-    val authArrayAvailable: Boolean = false,
-    val authArray: Array<Authenticator>,
-    val authSelected: Boolean,
-    val selectedAuth: Authenticator?,
-    val authenticationCompleted: Boolean,
-    val resetComplete: Boolean,
-    val message: String?,
+    val policyAvailable: Boolean = false,
+    val policy: Policy? = null,
+    val groupSelected: Boolean = false,
+    val group: Group? = null,
+    val authenticationCompleted: Boolean = false,
+    val resetComplete: Boolean = false,
+    val message: String? = null,
     val confirmTransaction: Boolean = false,
     val transactionContent: TransactionContent? = null,
     val transactionConfirmationResult:Int = 99,
@@ -49,20 +52,7 @@ class HomeViewModel @Inject constructor(application: Application, private val fi
 
     // Mutable state flow for the transaction state
     private val _transactionState = MutableStateFlow(
-        TransactionState(
-            authArrayAvailable = false,
-            authArray = emptyArray<Authenticator>(),
-            authSelected = false,
-            selectedAuth = null,
-            authenticationCompleted = false,
-            resetComplete = false,
-            message = null,
-            confirmTransaction = false,
-            transactionContent = null,
-            transactionConfirmationResult = 99,
-            confirmationOTPReceived = false,
-            confirmationOTP = null
-        )
+        TransactionState()
     )
     // Public state flow for the transaction state
     val transactionState: StateFlow<TransactionState> = _transactionState
@@ -79,7 +69,7 @@ class HomeViewModel @Inject constructor(application: Application, private val fi
         fido.addChooseAuthenticatorListener {
             // Show the authList to user
             _transactionState.update { currentTransactionState ->
-                currentTransactionState.copy(authArrayAvailable = true, authArray = it)
+                currentTransactionState.copy(policyAvailable = true, policy = it)
 
             }
         }
@@ -231,32 +221,38 @@ class HomeViewModel @Inject constructor(application: Application, private val fi
     fun deselectAuth() {
         _inProgress.value = false
         _transactionState.update { currentTransactionState ->
-            currentTransactionState.copy(authSelected = false)
+            currentTransactionState.copy(groupSelected = false)
         }
     }
 
     // Update the selected authenticator
-    fun updateSelectedAuth(auth: Authenticator) {
+    fun updateSelectedGroup(group: Group) {
         _transactionState.update { currentTransactionState ->
-            currentTransactionState.copy(selectedAuth = auth, authSelected = true, authArrayAvailable = false)
+            currentTransactionState.copy(group = group, groupSelected = true, policyAvailable = false)
         }
         prefs.edit {
-            this.putString("selectedAaid", auth.aaid)
+            this.putString("selectedAaid", group.getAuthenticator().aaid)
         }
     }
 
-    // Reset the authArrayAvailable flag
+    // Reset the authenticatorChoiceGroupAvailable flag
     fun resetAuthArrayAvailable() {
         _transactionState.update { currentTransactionState ->
-            currentTransactionState.copy(authArrayAvailable = false)
+            currentTransactionState.copy(policyAvailable = false)
         }
     }
 
     // Perform silent authentication
     fun authenticateSilent() {
-        val silentController = fido.getController(getApplication(), SILENT_AUTH_AAID) as CaptureControllerProtocol
-        silentController.startCapture()
-        silentController.completeCapture()
+        try {
+            _transactionState.value.group?.let { group ->
+                val silentController = fido.getController(getApplication(), group)
+                silentController?.startCapture()
+                silentController?.completeCapture()
+            }
+        } catch (e: ControllerInitializationException) {
+
+        }
     }
 
     // Cancel the current operation
@@ -304,6 +300,39 @@ class HomeViewModel @Inject constructor(application: Application, private val fi
 
     fun setSessionId(sessionId: String) {
         this.sessionId = sessionId
+    }
+
+    fun getPasscodeController(): PasscodeControllerProtocol? {
+        return try {
+            _transactionState.value.group?.let { group ->
+                fido.getController(getApplication(), group) as? PasscodeControllerProtocol
+            }
+        } catch (e: ControllerInitializationException) {
+            Log.d("DAON", "getPasscodeController: ${e.message}")
+            null
+        }
+    }
+
+    fun getFaceController(): FaceControllerProtocol? {
+        return try {
+            _transactionState.value.group?.let { group ->
+                fido.getController(getApplication(), group) as? FaceControllerProtocol
+            }
+        } catch (e: ControllerInitializationException) {
+            Log.d("DAON", "getFaceController: ${e.message}")
+            null
+        }
+    }
+
+    fun getFingerprintController(): FingerprintCaptureControllerProtocol? {
+        return try {
+            _transactionState.value.group?.let { group ->
+                fido.getController(getApplication(), group) as? FingerprintCaptureControllerProtocol
+            }
+        } catch (e: ControllerInitializationException) {
+            Log.d("DAON", "getFingerprintController: ${e.message}")
+            null
+        }
     }
 
 }

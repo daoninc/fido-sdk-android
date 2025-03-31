@@ -82,12 +82,10 @@ class FaceViewModel @Inject constructor(
      * @param lifecycleOwner The LifecycleOwner associated with the capture process.
      * @param previewView The PreviewView to display the camera preview.
      */
-    fun startCapture(lifecycleOwner: LifecycleOwner, previewView: PreviewView? = null) {
+    fun startCapture(controller: FaceControllerProtocol, lifecycleOwner: LifecycleOwner, previewView: PreviewView? = null) {
 
       try {
-          val aaidValue = prefs.getString("selectedAaid", null)
-          faceController =
-              aaidValue?.let { fido.getController(getApplication(), it) } as FaceControllerProtocol
+          faceController = controller
 
           this.lifecycleOwner = lifecycleOwner
 
@@ -342,11 +340,11 @@ class FaceViewModel @Inject constructor(
         }
     }
 
-    fun onRecapture(lifecycleOwner: LifecycleOwner, previewView: PreviewView) {
+    fun onRecapture(faceController: FaceControllerProtocol, lifecycleOwner: LifecycleOwner, previewView: PreviewView) {
         stopCapture()
         resetFaceUIState()
         resetFaceCaptureState()
-        startCapture(lifecycleOwner, previewView)
+        startCapture(faceController, lifecycleOwner, previewView)
     }
 
     // resets the UI state to its initial values

@@ -1,7 +1,5 @@
 package com.daon.fido.sdk.sample.kt.transaction
 
-
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -16,9 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import com.daon.fido.client.sdk.model.Authenticator
-import com.daon.fido.sdk.sample.kt.authenticators.getBitmap
+import com.daon.fido.client.sdk.Group
 import com.daon.fido.sdk.sample.kt.home.HomeViewModel
+import com.daon.fido.sdk.sample.kt.util.getBitmap
+import com.daon.fido.sdk.sample.kt.util.getGroupDescription
+import com.daon.fido.sdk.sample.kt.util.getGroupTitle
 
 /**
  *
@@ -27,9 +27,9 @@ import com.daon.fido.sdk.sample.kt.home.HomeViewModel
  */
 @Composable
 fun TransactionChoicesScreen(onNavigateUp: () -> Unit, viewModel: HomeViewModel) {
-    // Collect the TransactionState from the ViewModel which includes the list of authenticators
     val state = viewModel.transactionState.collectAsState()
-    val authList: List<Authenticator> = state.value.authArray.toList()
+    val policy = state.value.policy
+    val groups = policy?.getGroups()
 
     // Screen layout
     Scaffold(
@@ -41,15 +41,13 @@ fun TransactionChoicesScreen(onNavigateUp: () -> Unit, viewModel: HomeViewModel)
         },
         modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars),
     ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = it
-        ) {
-            items(authList) { auth ->
-                Log.d("DAON", "authList size ${authList.size}")
-                AuthCard(authenticator = auth, onNavigateUp, viewModel)
-
-            }
+        if (groups != null) {
+            GroupList(
+                groups,
+                onNavigateUp,
+                viewModel,
+                it
+            )
         }
     }
 
@@ -62,7 +60,22 @@ fun TransactionChoicesScreen(onNavigateUp: () -> Unit, viewModel: HomeViewModel)
 }
 
 @Composable
-fun AuthCard(authenticator: Authenticator, onNavigateUp: () -> Unit, viewModel: HomeViewModel) {
+fun GroupList(groups: Array<Group>, onNavigateUp: () -> Unit, viewModel: HomeViewModel, padding: PaddingValues) {
+
+    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = padding) {
+        items(groups) { group ->
+            AuthCard(
+                group = group,
+                onNavigateUp = onNavigateUp,
+                viewModel = viewModel
+            )
+        }
+    }
+}
+
+
+@Composable
+fun AuthCard(group: Group, onNavigateUp: () -> Unit, viewModel: HomeViewModel) {
     // Card layout for each authenticator item
     Card(
         modifier = Modifier
@@ -71,7 +84,7 @@ fun AuthCard(authenticator: Authenticator, onNavigateUp: () -> Unit, viewModel: 
             .wrapContentHeight()
             .clickable {
                 // Update the selected authenticator and navigate back
-                viewModel.updateSelectedAuth(authenticator)
+                viewModel.updateSelectedGroup(group)
                 onNavigateUp()
             },
         shape = MaterialTheme.shapes.medium,
@@ -81,7 +94,7 @@ fun AuthCard(authenticator: Authenticator, onNavigateUp: () -> Unit, viewModel: 
         ) {
             // Display the authenticator icon if available
             Image(
-                bitmap = getBitmap(authenticator.icon),
+                bitmap = getBitmap(group.getAuthenticator().icon),
                 contentDescription = " ",
                 modifier = Modifier
                     .size(60.dp)
@@ -90,12 +103,12 @@ fun AuthCard(authenticator: Authenticator, onNavigateUp: () -> Unit, viewModel: 
             // Display the authenticator title and description
             Column(Modifier.padding(8.dp)) {
                 Text(
-                   text = authenticator.title,
+                   text = getGroupTitle(group),
                    style = MaterialTheme.typography.h6,
                    color = MaterialTheme.colors.onSurface
                 )
                 Text (
-                    text = authenticator.description ,
+                    text = getGroupDescription(group) ,
                     style = MaterialTheme.typography.body2
                 )
             }
@@ -104,3 +117,5 @@ fun AuthCard(authenticator: Authenticator, onNavigateUp: () -> Unit, viewModel: 
     }
 
 }
+
+

@@ -31,15 +31,19 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.daon.sdk.authenticator.controller.PasscodeControllerProtocol
 
 /**
  * UI for the passcode verification and re-enrollment process.
  * @param onNavigateUp: Callback function to handle navigation when passcode
  * verification and re-enrollment is complete.
+ * @param passcodeController: The passcode controller to use for the passcode verification and re-enrollment process.
  */
 @Composable
 fun VerifyAndReenrolPasscodeScreen(
-    onNavigateUp: () -> Unit ) {
+    onNavigateUp: () -> Unit ,
+    passcodeController: PasscodeControllerProtocol
+) {
 
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
@@ -51,7 +55,7 @@ fun VerifyAndReenrolPasscodeScreen(
 
     // Starting the ViewModel when the composable enters the composition
     DisposableEffect(key1 = verifyAndReenrolPasscodeViewModel ) {
-        verifyAndReenrolPasscodeViewModel.onStart()
+        verifyAndReenrolPasscodeViewModel.onStart(passcodeController)
         onDispose { verifyAndReenrolPasscodeViewModel.onStop() }
     }
 

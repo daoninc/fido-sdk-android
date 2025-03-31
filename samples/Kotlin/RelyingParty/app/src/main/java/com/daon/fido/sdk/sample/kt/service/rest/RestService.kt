@@ -407,14 +407,17 @@ class RestService (private val context: Context, private val params: Bundle): IX
     private fun getActiveAuthenticatorId(username: String, aaid: String): String? {
         when (val authResponse = getAuthenticators(username)) {
             is Success -> {
-                val authDetailsJson = JSONObject(authResponse.params.getString("authDetails"))
-                if (authDetailsJson.has("items")) {
-                    val authDetails = authDetailsJson.getJSONArray("items")
-                    val authDetailsArray =
-                        Gson().fromJson(authDetails.toString(), Array<AuthDetails>::class.java)
-                    for (auth in authDetailsArray) {
-                        if (auth.authenticatorAttestationId == aaid && auth.status == "ACTIVE") {
-                            return auth.id
+                val authDetailsJson = authResponse.params.getString("authDetails")
+                    ?.let { JSONObject(it) }
+                if (authDetailsJson != null) {
+                    if (authDetailsJson.has("items")) {
+                        val authDetails = authDetailsJson.getJSONArray("items")
+                        val authDetailsArray =
+                            Gson().fromJson(authDetails.toString(), Array<AuthDetails>::class.java)
+                        for (auth in authDetailsArray) {
+                            if (auth.authenticatorAttestationId == aaid && auth.status == "ACTIVE") {
+                                return auth.id
+                            }
                         }
                     }
                 }
@@ -428,14 +431,16 @@ class RestService (private val context: Context, private val params: Bundle): IX
     }
 
     private fun parseUserResponse(userResponseString: String?): User? {
-        val usersJson = JSONObject(userResponseString)
-        if (usersJson.has("items")) {
-            val userDetails = usersJson.getJSONArray("items")
-            val usersArray = Gson().fromJson(userDetails.toString(), Array<User>::class.java)
-            for (user in usersArray) {
-                if (user.status == "ACTIVE") {
-                    return user
+        val usersJson = userResponseString?.let { JSONObject(it) }
+        if (usersJson != null) {
+            if (usersJson.has("items")) {
+                val userDetails = usersJson.getJSONArray("items")
+                val usersArray = Gson().fromJson(userDetails.toString(), Array<User>::class.java)
+                for (user in usersArray) {
+                    if (user.status == "ACTIVE") {
+                        return user
 
+                    }
                 }
             }
         }
@@ -497,12 +502,12 @@ class RestService (private val context: Context, private val params: Bundle): IX
         }
     }
 
-    override suspend fun serviceUpdateAttempt(params: Bundle): Response {
+    override suspend fun serviceUpdateAttempt(info: Bundle): Response {
         LogUtils.logVerbose(null, TAG, "RestService serviceUpdateAttempt")
-        val paramId = params.getString(VerificationAttemptParameters.PARAM_USER_AUTH_KEY_ID)
-        val paramErrorCode = params.getInt(VerificationAttemptParameters.PARAM_ERROR_CODE)
-        val paramScore = params.getDouble(VerificationAttemptParameters.PARAM_SCORE)
-        val authRequestId = params.getString(IXUAF.REQUEST_ID)
+        val paramId = info.getString(VerificationAttemptParameters.PARAM_USER_AUTH_KEY_ID)
+        val paramErrorCode = info.getInt(VerificationAttemptParameters.PARAM_ERROR_CODE)
+        val paramScore = info.getDouble(VerificationAttemptParameters.PARAM_SCORE)
+        val authRequestId = info.getString(IXUAF.REQUEST_ID)
 
         val attempts = JSONObject()
         attempts.put(AUTHKEYID, paramId)

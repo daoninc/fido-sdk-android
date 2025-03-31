@@ -8,14 +8,17 @@ import android.util.Log
 import androidx.core.content.edit
 import androidx.lifecycle.viewModelScope
 import com.daon.fido.client.sdk.Failure
+import com.daon.fido.client.sdk.Group
 import com.daon.fido.client.sdk.IXUAF
+import com.daon.fido.client.sdk.Policy
 import com.daon.fido.client.sdk.Success
 import com.daon.fido.client.sdk.model.AccountInfo
-import com.daon.fido.client.sdk.model.Authenticator
 import com.daon.fido.sdk.sample.kt.BaseViewModel
-import com.daon.fido.sdk.sample.kt.model.SILENT_AUTH_AAID
-import com.daon.sdk.authenticator.controller.CaptureControllerProtocol
+import com.daon.sdk.authenticator.controller.FingerprintCaptureControllerProtocol
+import com.daon.sdk.authenticator.controller.PasscodeControllerProtocol
+import com.daon.sdk.authenticator.exception.ControllerInitializationException
 import com.daon.sdk.crypto.log.LogUtils
+import com.daon.sdk.faceauthenticator.controller.FaceControllerProtocol
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,16 +39,16 @@ data class FidoUiState(
     val inProgress: Boolean = false,
     val initializationResult: FidoInitializationResult? = null,
     val accountCreationResult: AccountCreationResult? = null,
-    val authArrayAvailable: Boolean = false,
-    val authArray: Array<Authenticator>,
-    val authSelected: Boolean,
-    val selectedAuth: Authenticator?,
+    val policyAvailable: Boolean = false,
+    val policy: Policy? = null,
+    val groupSelected: Boolean = false,
+    val group: Group? = null,
     val loginResult: LoginResult? = null,
     val username: String? = null,
-    val accountArray: Array<AccountInfo>,
-    val accountListAvailable: Boolean,
-    val accountSelected: Boolean,
-    val selectedAccount: AccountInfo?
+    val accountArray: Array<AccountInfo> = emptyArray<AccountInfo>(),
+    val accountListAvailable: Boolean = false,
+    val accountSelected: Boolean = false,
+    val selectedAccount: AccountInfo? = null
 )
 
 // Data class representing the result of an account creation operation
@@ -80,18 +83,7 @@ class IntroViewModel @Inject constructor(application: Application, private val f
 
     // Mutable state flow for the UI state
     private val _uiState = MutableStateFlow(
-        FidoUiState(
-            inProgress = false,
-            authArrayAvailable = false,
-            authArray = emptyArray<Authenticator>(),
-            authSelected = false,
-            selectedAuth = null,
-            username = null,
-            accountArray = emptyArray<AccountInfo>(),
-            accountListAvailable = false,
-            accountSelected = false,
-            selectedAccount = null
-            )
+        FidoUiState()
     )
 
     // State flow for the UI state
@@ -151,7 +143,7 @@ class IntroViewModel @Inject constructor(application: Application, private val f
 
         fido.addChooseAuthenticatorListener {
             _uiState.update { currentUiState ->
-                currentUiState.copy(authArrayAvailable = true, authArray = it)
+                currentUiState.copy(policyAvailable = true, policy = it)
             }
         }
 
@@ -356,13 +348,14 @@ class IntroViewModel @Inject constructor(application: Application, private val f
         }
     }
 
-    // Update the selected authenticator
-    fun updateSelectedAuth(auth: Authenticator) {
+    // Update the selected authenticator group
+    fun updateSelectedGroup(group: Group) {
         _uiState.update { currentAuthState ->
-            currentAuthState.copy(selectedAuth = auth, authSelected = true, authArrayAvailable = false)
+            currentAuthState.copy(group = group, groupSelected = true, policyAvailable = false)
         }
+
         prefs.edit {
-            this.putString("selectedAaid", auth.aaid)
+            this.putString("selectedAaid", group.getAuthenticator().aaid)
         }
     }
 
@@ -389,28 +382,67 @@ class IntroViewModel @Inject constructor(application: Application, private val f
     // Reset the auth array available flag
     fun resetAuthArrayAvailable() {
         _uiState.update { currentAuthState ->
-            currentAuthState.copy(authArrayAvailable = false)
+            currentAuthState.copy(policyAvailable = false)
         }
     }
 
     // Deselect the selected authenticator
     fun deselectAuth() {
         _uiState.update { currentUiState ->
-            currentUiState.copy(authSelected = false)
+            currentUiState.copy(groupSelected = false)
         }
     }
 
     // Perform silent authentication
     fun authenticateSilent() {
-        val silentController = fido.getController(getApplication(), SILENT_AUTH_AAID) as CaptureControllerProtocol
-        silentController.startCapture()
-        silentController.completeCapture()
+        try {
+            _uiState.value.group?.let { group ->
+                val silentController = fido.getController(getApplication(), group)
+                silentController?.startCapture()
+                silentController?.completeCapture()
+            }
+        } catch (e: ControllerInitializationException) {
+
+        }
     }
 
     // Cancel the current operation
     fun cancelCurrentOperation() {
         viewModelScope.launch(Dispatchers.Default) {
             fido.cancelCurrentOperation()
+        }
+    }
+
+    fun getPasscodeController(): PasscodeControllerProtocol? {
+        return try {
+            _uiState.value.group?.let { group ->
+                fido.getController(getApplication(), group) as? PasscodeControllerProtocol
+            }
+        } catch (e: ControllerInitializationException) {
+            Log.d("DAON", "getPasscodeController exception - ${e.message}")
+            null
+        }
+    }
+
+    fun getFaceController(): FaceControllerProtocol? {
+        return try {
+            _uiState.value.group?.let { group ->
+                fido.getController(getApplication(), group) as? FaceControllerProtocol
+            }
+        } catch (e: ControllerInitializationException) {
+            Log.d("DAON", "getFaceController exception - ${e.message}")
+            null
+        }
+    }
+
+    fun getFingerprintController(): FingerprintCaptureControllerProtocol? {
+        return try {
+            _uiState.value.group?.let { group ->
+                fido.getController(getApplication(), group) as? FingerprintCaptureControllerProtocol
+            }
+        } catch (e: ControllerInitializationException) {
+            Log.d("DAON", "getFingerprintController exception - ${e.message}")
+            null
         }
     }
 

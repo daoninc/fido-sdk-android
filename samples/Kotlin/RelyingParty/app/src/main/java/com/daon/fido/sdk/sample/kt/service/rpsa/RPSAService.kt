@@ -111,7 +111,7 @@ class RPSAService (private val context: Context, private val params: Bundle): IX
     override suspend fun serviceRevokeAccess(params: Bundle): Response {
         val sessionId = params.getString("sessionId")
         if (sessionId != null) {
-            val httpResponse = http.deleteResource(serverResourceSessions, sessionId!!, false, sessionId)
+            val httpResponse = http.deleteResource(serverResourceSessions, sessionId, false, sessionId)
             return when (httpResponse) {
                 is HTTP.Success -> {
                     Success(Bundle())
@@ -152,7 +152,7 @@ class RPSAService (private val context: Context, private val params: Bundle): IX
         }
     }
 
-    override suspend fun serviceRequestRegistration(inParams: Bundle): Response {
+    override suspend fun serviceRequestRegistration(params: Bundle): Response {
         if (cachedRegistrationRequest != null) {
             val result = Bundle()
             result.putString(IXUAF.REG_REQUEST, cachedRegistrationRequest)
@@ -161,7 +161,7 @@ class RPSAService (private val context: Context, private val params: Bundle): IX
             cachedRegistrationRequestId = null
             return Success(result)
         } else {
-            val sessionId = inParams.getString("sessionId")
+            val sessionId = params.getString("sessionId")
             when (val httpResponse = http.get(serverResourceRegRequests, sessionId)) {
                 is HTTP.Success -> {
                     if (httpResponse.httpStatusCode == HttpURLConnection.HTTP_CREATED || httpResponse.httpStatusCode == HttpURLConnection.HTTP_OK) {
@@ -601,26 +601,26 @@ class RPSAService (private val context: Context, private val params: Bundle): IX
     }
 
 
-    override suspend fun serviceUpdateAttempt(params: Bundle): Response {
+    override suspend fun serviceUpdateAttempt(info: Bundle): Response {
         val submitFailedAttemptRequest = SubmitFailedAttemptRequest(
-            emailAddress = params.getString(VerificationAttemptParameters.PARAM_USER_ACCOUNT, null),
-            attempt = params.getInt(VerificationAttemptParameters.PARAM_ATTEMPT, Integer.MIN_VALUE)
+            emailAddress = info.getString(VerificationAttemptParameters.PARAM_USER_ACCOUNT, null),
+            attempt = info.getInt(VerificationAttemptParameters.PARAM_ATTEMPT, Integer.MIN_VALUE)
                 .toString(),
-            attemptsRemaining = params.getInt(
+            attemptsRemaining = info.getInt(
                 VerificationAttemptParameters.PARAM_ATTEMPTS_REMAINING, Integer.MIN_VALUE
             ).toString(),
-            globalAttempt = params.getInt(
+            globalAttempt = info.getInt(
                 VerificationAttemptParameters.PARAM_GLOBAL_ATTEMPT, Integer.MIN_VALUE
             ).toString(),
-            lockStatus = params.getString(VerificationAttemptParameters.PARAM_LOCK_STATUS, null),
-            errorCode = params.getInt(VerificationAttemptParameters.PARAM_ERROR_CODE, 0).toString(),
-            score = params.getDouble(VerificationAttemptParameters.PARAM_SCORE, 0.0).toString(),
-            userAuthKeyId = params.getString(
+            lockStatus = info.getString(VerificationAttemptParameters.PARAM_LOCK_STATUS, null),
+            errorCode = info.getInt(VerificationAttemptParameters.PARAM_ERROR_CODE, 0).toString(),
+            score = info.getDouble(VerificationAttemptParameters.PARAM_SCORE, 0.0).toString(),
+            userAuthKeyId = info.getString(
                 VerificationAttemptParameters.PARAM_USER_AUTH_KEY_ID, null
             ),
-            authenticationRequestId = params.getString(IXUAF.REQUEST_ID, null)
+            authenticationRequestId = info.getString(IXUAF.REQUEST_ID, null)
         )
-        val sessionId = params.getString("sessionId")
+        val sessionId = info.getString("sessionId")
         val payload = Gson().toJson(submitFailedAttemptRequest)
         when (val httpResponse = http.post(serverResourceSubmitFailedAttempts, payload, sessionId)) {
             is HTTP.Success -> {

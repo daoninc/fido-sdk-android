@@ -29,33 +29,6 @@ attack prevention when used with the IdentityX server. The app is built using Ko
 This file contains the dependencies and their versions used in the project. Ensure that the versions 
 are up-to-date.
 
-### `app/src/main/java/com/daon/fido/sdk/sample/kt/util/FidoHolder.kt`
-
-This file contains the `FidoHolder` class, which is a singleton that manages the FIDO SDK instance 
-and the RPSA/REST server instance.
-
-- **RPSA Server Configuration:**
-
-    ```kotlin
-    val rpsaParams = Bundle()
-    rpsaParams.putString("server_url", <server-url>)
-    return IXUAFRPSAService(context, rpsaParams)
-    ```
-
-- **REST Service Configuration:**
--
-    ```kotlin
-    val restParams = Bundle()
-    restParams.putString("appId", <app-id>)
-    restParams.putString("regPolicy", <reg-policy>)
-    restParams.putString("authPolicy", <auth-policy>)
-    restParams.putString("username", <username>)
-    restParams.putString("password", <passsword>)
-    restParams.putString("server_url", <server-url>)
-    restParams.putString("rest_path", <rest-path>)
-    return IXUAFRestService(context, restParams)
-    ```
-
 ## Usage
 
 1. **Create the RPSA server instance:**
@@ -68,12 +41,6 @@ and the RPSA/REST server instance.
     ```kotlin
     var fido = IXUAF(context, rpsaServer)
     ```
-3. **Access the FIDO SDK instance using FidoHolder:**
-
- ```kotlin
-    val fidoHolder = FidoHolder.getInstance(context)
-    val fido = fidoHolder.fido
- ```
    
 ## License
 The FIDO SDK requires a license that is bound to an application identifier. This license may in 

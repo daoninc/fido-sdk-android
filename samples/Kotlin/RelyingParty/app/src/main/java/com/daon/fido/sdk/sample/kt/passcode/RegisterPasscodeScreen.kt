@@ -29,14 +29,18 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.daon.sdk.authenticator.controller.PasscodeControllerProtocol
 
 /**
  * UI for the passcode registration process.
  * @param onNavigateUp: Callback function to handle navigation when passcode registration is complete.
+ * @param passcodeController: The passcode controller to use for the passcode registration process.
  */
 @Composable
 fun RegisterPasscodeScreen(
-    onNavigateUp: () -> Unit ) {
+    onNavigateUp: () -> Unit ,
+    passcodeController: PasscodeControllerProtocol
+) {
 
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
@@ -47,7 +51,7 @@ fun RegisterPasscodeScreen(
 
     // Starting the ViewModel when the composable enters the composition
     DisposableEffect(key1 = registerPasscodeViewModel ) {
-        registerPasscodeViewModel.onStart()
+        registerPasscodeViewModel.onStart(passcodeController)
         onDispose { registerPasscodeViewModel.onStop() }
     }
 

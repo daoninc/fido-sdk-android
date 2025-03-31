@@ -10,15 +10,12 @@ import com.daon.fido.sdk.sample.kt.R
 import com.daon.sdk.authenticator.Authenticator
 import com.daon.sdk.authenticator.controller.CaptureCompleteListener
 import com.daon.sdk.authenticator.controller.CaptureCompleteResult
-import com.daon.sdk.authenticator.controller.ControllerConfiguration
 import com.daon.sdk.authenticator.controller.PasscodeControllerProtocol
-import com.daon.sdk.authenticator.exception.ControllerInitializationException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.lang.Exception
 import javax.inject.Inject
 
 /**
@@ -46,53 +43,16 @@ class PasscodeViewModel @Inject constructor(
     private val _enableRetry = MutableStateFlow(false)
     val enableRetry = _enableRetry.asStateFlow()
 
-    private val _isEnrol = MutableStateFlow(false)
-    val isEnrol = _isEnrol.asStateFlow()
-
-    private val _isVerifyAndEnroll = MutableStateFlow(false)
-    val isVerifyAndEnroll = _isVerifyAndEnroll.asStateFlow()
-
-    private val _controllerInstantiated = MutableStateFlow(false)
-    val controllerInstantiated = _controllerInstantiated.asStateFlow()
-
-    private val _onControllerInstantiateError = MutableStateFlow(false)
-    val onControllerInstantiateError = _onControllerInstantiateError.asStateFlow()
-
     /**
-     * Initialize the passcode controller.
+     * Start the capture process.
      */
-    fun intializeController() {
-        val aaidValue = prefs.getString("selectedAaid", null)
-        if (aaidValue != null) {
-            //Handling the ControllerInitializationException here - for example. if the authenticator is locked
-            try {
-                controller =
-                    fido.getController(getApplication(), aaidValue) as PasscodeControllerProtocol
-                _controllerInstantiated.value = true
-                _isEnrol.value = controller.isEnrol
-                if (controller.authenticationMode == ControllerConfiguration.AuthenticationMode.VERIFY_AND_REENROL) {
-                    _isVerifyAndEnroll.value = true
-                }
-
-            } catch (e: ControllerInitializationException) {
-                Log.d("DAON", "PasscodeViewModel getControllerMode exception: ${e.message}")
-                _captureInfo.value = "Error: ${e.message}"
-                _onControllerInstantiateError.value = true
-                cancelCurrentOperation()
-            }
-        }
-
+    fun onStart(passcodeController: PasscodeControllerProtocol) {
+        controller = passcodeController
         // Add user lock warning listener
         fido.addUserLockWarningListener {
             _captureInfo.value = getResourceString(R.string.user_lock_warning)
         }
 
-    }
-
-    /**
-     * Start the capture process.
-     */
-    fun onStart() {
         controller.startCapture()
     }
 
@@ -167,10 +127,6 @@ class PasscodeViewModel @Inject constructor(
 
     fun resetEnableRetry() {
         _enableRetry.value = false
-    }
-
-    fun resetControllerInstantiatedError() {
-        _onControllerInstantiateError.value = false
     }
 
     /**

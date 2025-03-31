@@ -1,32 +1,16 @@
 package com.daon.fido.sdk.sample.kt.authenticators
 
-import android.graphics.BitmapFactory
-import android.util.Base64
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.*
+
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.Card
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -39,8 +23,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
@@ -48,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
+import com.daon.fido.client.sdk.Group
 import com.daon.fido.client.sdk.model.Authenticator
 import com.daon.fido.sdk.sample.kt.model.ADOS_FACE_AUTH_AAID
 import com.daon.fido.sdk.sample.kt.model.FACE_AUTH_AAID
@@ -57,6 +40,7 @@ import com.daon.fido.sdk.sample.kt.model.SILENT_AUTH_AAID
 import com.daon.fido.sdk.sample.kt.model.SRP_PASSCODE_AUTH_AAID
 import com.daon.fido.sdk.sample.kt.ui.theme.ButtonColor
 import com.daon.fido.sdk.sample.kt.util.CircularIndeterminateProgressBar
+import com.daon.fido.sdk.sample.kt.util.getBitmap
 
 /*
  * Displays a list of registered authenticators .
@@ -71,8 +55,6 @@ fun AuthenticatorsScreen(
     onNavigateToFingerprint: () -> Unit,
     onNavigateUp: () -> Unit
 ) {
-
-    // ViewModel for the AuthenticatorsScreen
     val viewModel = hiltViewModel<AuthenticatorsViewModel>()
     var selectedIndex by remember { mutableIntStateOf(-1) }
     val context = LocalContext.current
@@ -83,26 +65,73 @@ fun AuthenticatorsScreen(
     // Observe the state changes
     LaunchedEffect(key1 = viewModel.authState) {
         viewModel.authState.collect { authState ->
-            if (authState.authListAvailable) {
-                onNavigateToChooseAuth(onNavigateUp, viewModel)
+            if (authState.policyAvailable) {
+                // For multi-factor registration, if an authenticator group is already selected, navigate to the next authenticator.
+                // For non-multi-factor operations, isUpdate is always false.
+                val isUpdate = authState.policy?.isUpdate()
+                if (isUpdate == true) {
+                    val groups: Array<Group>? = authState.policy.getGroups()
+                    groups.let { groups ->
+                        if (!groups.isNullOrEmpty()) {
+                            viewModel.updateSelectedGroup(groups[0])
+                        }
+                    }
+                } else {
+                    onNavigateToChooseAuth(onNavigateUp, viewModel)
+                }
             }
 
             selectedIndex = authState.selectedIndex
 
             // Navigate to the respective authenticator screen based on the selected authenticator
-            if (authState.authSelected) {
-                val aaid = authState.selectedAuth?.aaid
-                when (aaid) {
+            if (authState.groupSelected) {
+                when (authState.group?.getAuthenticator()?.aaid) {
                     SRP_PASSCODE_AUTH_AAID, PASSCODE_AUTH_AAID -> {
-                        onNavigateToPasscode()
+                        val passcodeController = viewModel.getPasscodeController()
+                        if (passcodeController != null) {
+                            onNavigateToPasscode()
+                        } else {
+                            //Not able to proceed with registration, so cancelling the current operation
+                            viewModel.cancelCurrentOperation()
+                            viewModel.resetInProgress()
+                            Toast.makeText(
+                                context,
+                                "Passcode controller is not available.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
                     }
 
                     FINGERPRINT_AUTH_AAID -> {
-                        onNavigateToFingerprint()
+                        val fingerprintController = viewModel.getFingerprintController()
+                        if (fingerprintController != null) {
+                            onNavigateToFingerprint()
+                        } else {
+                            //Not able to proceed with registration, so cancelling the current operation
+                            viewModel.cancelCurrentOperation()
+                            viewModel.resetInProgress()
+                            Toast.makeText(
+                                context,
+                                "Fingerprint controller is not available.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
                     }
 
                     FACE_AUTH_AAID, ADOS_FACE_AUTH_AAID -> {
-                        onNavigateToFace()
+                        val faceController = viewModel.getFaceController()
+                        if (faceController != null) {
+                            onNavigateToFace()
+                        } else {
+                            //Not able to proceed with registration, so cancelling the current operation
+                            viewModel.cancelCurrentOperation()
+                            viewModel.resetInProgress()
+                            Toast.makeText(
+                                context,
+                                "Face controller is not available.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
                     }
 
                     SILENT_AUTH_AAID -> {
@@ -142,10 +171,15 @@ fun AuthenticatorsScreen(
     }
 
     // Screen layout
-    Scaffold(topBar = {
-        TopAppBar(backgroundColor = MaterialTheme.colors.background,
-            title = { Text("Registered authenticators") })
-    }, modifier = Modifier.safeDrawingPadding()) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                backgroundColor = MaterialTheme.colors.background,
+                title = { Text("Registered authenticators")}
+            )
+        },
+        modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -154,15 +188,17 @@ fun AuthenticatorsScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Column(
-                modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
                 AuthenticatorList(viewModel, selectedIndex)
                 CircularIndeterminateProgressBar(isDisplayed = inProgress)
+                Spacer(modifier = Modifier.weight(1f))
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(8.dp)
+                        .padding(horizontal = 16.dp)
                 ) {
                     Button(
                         onClick = {
@@ -279,12 +315,3 @@ fun AuthenticatorInfoCard(
     }
 }
 
-// Get the ImageBitmap from the base64 encoded string
-fun getBitmap(icon: String): ImageBitmap {
-    val options = BitmapFactory.Options()
-    options.inMutable = true
-    val commaIndex = icon.indexOf(',')
-    val imageBase64 = icon.substring(commaIndex + 1)
-    val imgBytes = Base64.decode(imageBase64, Base64.DEFAULT)
-    return BitmapFactory.decodeByteArray(imgBytes, 0, imgBytes.size, options).asImageBitmap()
-}

@@ -46,49 +46,38 @@ class FingerprintViewModel @Inject constructor(
      * Starts the fingerprint capture process.
      * @param context The context to use for starting the capture.
      */
-    fun onStart(context: Context) {
-        try {
-            // Initialize the fingerprint capture controller
-            fingerController = fido.getController(
-                getApplication(),
-                FINGERPRINT_AUTH_AAID
-            ) as FingerprintCaptureControllerProtocol
-            // Start the fingerprint capture
-            fingerController.startCapture(context.findActivity()) { result ->
-                if (result != null) {
-                    when (result.type) {
-                        CaptureCompleteResult.Type.TERMINATE_SUCCESS -> {
-                            Log.d("DAON", "finger capture complete")
-                            _captureComplete.value = true
-                        }
+    fun onStart(context: Context, controller: FingerprintCaptureControllerProtocol) {
+        fingerController = controller
+        // Start the fingerprint capture
+        fingerController.startCapture(context.findActivity()) { result ->
+            if (result != null) {
+                when (result.type) {
+                    CaptureCompleteResult.Type.TERMINATE_SUCCESS -> {
+                        Log.d("DAON", "finger capture complete")
+                        _captureComplete.value = true
+                    }
 
-                        CaptureCompleteResult.Type.TERMINATE_FAILURE -> {
-                            Log.d("DAON", "finger capture TERMINATE_FAILURE")
-                            fingerController.cancelCapture()
-                            _captureComplete.value = true
-                        }
+                    CaptureCompleteResult.Type.TERMINATE_FAILURE -> {
+                        Log.d("DAON", "finger capture TERMINATE_FAILURE")
+                        fingerController.cancelCapture()
+                        _captureComplete.value = true
+                    }
 
-                        CaptureCompleteResult.Type.CLIENT_ERROR -> {
-                            Log.d("DAON", "finger capture CLIENT_ERROR")
-                            _captureComplete.value = true
-                        }
+                    CaptureCompleteResult.Type.CLIENT_ERROR -> {
+                        Log.d("DAON", "finger capture CLIENT_ERROR")
+                        _captureComplete.value = true
+                    }
 
-                        CaptureCompleteResult.Type.CLIENT_VALIDATION_ERROR -> {
-                            Log.d("DAON", "finger capture CLIENT_VALIDATION_ERROR")
-                        }
+                    CaptureCompleteResult.Type.CLIENT_VALIDATION_ERROR -> {
+                        Log.d("DAON", "finger capture CLIENT_VALIDATION_ERROR")
                     }
                 }
             }
+        }
 
-            // Add a listener for user lock warnings
-            fido.addUserLockWarningListener {
-                _captureInfo.value = getResourceString(R.string.user_lock_warning)
-            }
-        } catch (e: ControllerInitializationException) {
-            Log.e("DAON", "Error starting fingerprint capture: ${e.message}")
-            _captureInfo.value = e.message ?: ""
-            _captureComplete.value = true
-            cancelCurrentOperation()
+        // Add a listener for user lock warnings
+        fido.addUserLockWarningListener {
+            _captureInfo.value = getResourceString(R.string.user_lock_warning)
         }
 
     }

@@ -35,31 +35,27 @@ In your project-level build.gradle file, make sure to include the Daon Maven rep
 Add the following dependencies to the build.gradle file:
 
 ```gradle
-implementation 'com.daon.sdk:fido-kt:4.8.142'
-implementation 'com.daon.sdk:fido-device:4.8.5'
-implementation 'com.daon.sdk:fido-crypto:4.8.7'
-implementation 'com.daon.sdk:fido-auth-common:4.8.35'
-implementation 'com.daon.sdk:fido-auth-authenticator:4.8.35'
+implementation 'com.daon.sdk:fido-kt:4.10.24'
+implementation 'com.daon.sdk:fido-device:4.9.13'
+implementation 'com.daon.sdk:fido-crypto:4.9.18'
+implementation 'com.daon.sdk:fido-auth-authenticator:4.10.24'
 
 // Face authenticator with Injection Attack Detection
-implementation 'com.daon.sdk:fido-auth-face-ifp:4.8.35'
-implementation 'com.daon.sdk:face:5.3.37'
-implementation 'com.daon.sdk:face-quality:3.2.103'
-implementation 'com.daon.sdk:face-capture:1.7.37'
-
-// Optional medical mask detection
-implementation 'com.daon.sdk:face-mask:1.0.10'
+implementation 'com.daon.sdk:fido-auth-face-ifp:4.10.24'
+implementation 'com.daon.sdk:face:5.3.98'
+implementation 'com.daon.sdk:face-quality:3.2.109'
+implementation 'com.daon.sdk:face-capture:2.0.98'
 
 // Optional client side passive liveness V1
-implementation 'com.daon.sdk:face-liveness:5.3.37'
+implementation 'com.daon.sdk:face-liveness:5.3.98'
 
 // Continuity checks and local face matching
-implementation 'com.daon.sdk:face-matcher:1.3.2'
+implementation 'com.daon.sdk:face-matcher:1.3.108'
 
 // CameraX core library
 // Used by the face capture library
 
-def camerax_version = "1.3.4"
+def camerax_version = "1.6.1"
 
 implementation "androidx.camera:camera-core:${camerax_version}"
 implementation "androidx.camera:camera-camera2:${camerax_version}"
@@ -147,6 +143,4 @@ viewModelScope.launch(Dispatchers.Default) {
 ```
 
 See included samples and [xAuth FIDO SDK Documentation](https://developer.identityx-cloud.com/client/fido/android/) for details and additional information.
-
-
 

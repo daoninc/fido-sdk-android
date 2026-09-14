@@ -1,3 +1,6 @@
+import org.gradle.api.initialization.resolve.RepositoriesMode
+import org.gradle.kotlin.dsl.maven
+
 pluginManagement {
     repositories {
         google()

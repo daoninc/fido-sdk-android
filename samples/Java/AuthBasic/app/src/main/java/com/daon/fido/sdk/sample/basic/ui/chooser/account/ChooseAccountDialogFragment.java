@@ -44,7 +44,7 @@ public class ChooseAccountDialogFragment extends DialogFragment {
         }
 
         if (getArguments() != null && !getArguments().isEmpty()) {
-            String[] accounts = (String[]) getArguments().getSerializable("accounts");
+            String[] accounts = getArguments().getStringArray("accounts");
             AccountListAdapter adapter = new AccountListAdapter(getContext(), accounts);
             listView.setAdapter(adapter);
             listView.setOnItemClickListener((parent, view, position, id) -> {

@@ -20,6 +20,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.FidoBasic">
+        <!-- Uncomment to use SHA-256 for Facet ID (FIDO 2.1). Default is SHA-1 (FIDO 1.1).
+             Changing this requires updating the allowed facets list on the IDX server. -->
+        <!-- <meta-data
+            android:name="com.daon.fido.client.sdk.FACET_ID_ALGORITHM"
+            android:value="SHA-256" /> -->
         <activity
             android:name=".intro.IntroActivity"
             android:exported="true"

@@ -156,7 +156,7 @@ public class HomeActivity extends EdgeToEdgeActivity implements AccountDeleteTas
         }
 
         Bundle bundle = new Bundle();
-        bundle.putSerializable("accounts", accounts);
+        bundle.putStringArray("accounts", accounts);
 
         ChooseAccountDialogFragment chooseAccountDialogFragment = getChooseAccountDialogFragment(accountInfos, bundle);
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();

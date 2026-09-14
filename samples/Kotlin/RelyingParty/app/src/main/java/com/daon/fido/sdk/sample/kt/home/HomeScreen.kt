@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
-import com.daon.fido.client.sdk.Group
 import com.daon.fido.sdk.sample.kt.R
 import com.daon.fido.sdk.sample.kt.model.*
 import com.daon.fido.sdk.sample.kt.ui.theme.ButtonColor
@@ -59,11 +58,9 @@ fun HomeScreen(
                 // For non-multi-factor operations, isUpdate is always false.
                 val isUpdate = transactionState.policy?.isUpdate()
                 if (isUpdate == true) {
-                    val groups: Array<Group>? = transactionState.policy.getGroups()
-                    groups?.let {groups ->
-                        if (groups.isNotEmpty()) {
-                            viewModel.updateSelectedGroup(groups[0])
-                        }
+                    val groups = transactionState.policy.getGroups()
+                    if (groups.isNotEmpty()) {
+                        viewModel.updateSelectedGroup(groups[0])
                     }
                 } else {
                     onNavigateToChooseAuth(onNavigateUp, viewModel)
@@ -104,7 +101,7 @@ fun HomeScreen(
                         }
                     }
 
-                    SILENT_AUTH_AAID -> {
+                    SILENT_AUTH_AAID, SILENT2_AUTH_AAID -> {
                         viewModel.authenticateSilent()
                     }
                 }

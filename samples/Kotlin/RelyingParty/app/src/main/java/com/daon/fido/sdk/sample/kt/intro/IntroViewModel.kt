@@ -47,8 +47,6 @@ data class FidoUiState(
     val username: String? = null,
     val accountArray: Array<AccountInfo> = emptyArray<AccountInfo>(),
     val accountListAvailable: Boolean = false,
-    val accountSelected: Boolean = false,
-    val selectedAccount: AccountInfo? = null
 )
 
 // Data class representing the result of an account creation operation
@@ -107,6 +105,9 @@ class IntroViewModel @Inject constructor(application: Application, private val f
                     putString("com.daon.sdk.ados.enabled", "true")
                     //Enabling ADoS SRP Passcode
                     putString("com.daon.sdk.passcode.ados.version", "2")
+                    putString("com.daon.sdk.analyticsEnabled", "true")
+                    //Enabling silent fingerprint registration
+                    //putString("com.daon.finger.silent", "true")
                 }
 
                 when (val response = fido.initialize(parameters)) {
@@ -361,21 +362,15 @@ class IntroViewModel @Inject constructor(application: Application, private val f
 
     // Update the selected authenticator
     fun updateSelectedAccount(account: AccountInfo) {
+        fido.submitUserSelectedAccount(account)
         _uiState.update { currentAuthState ->
-            currentAuthState.copy(selectedAccount = account, accountSelected = true, accountListAvailable = false, accountArray = emptyArray<AccountInfo>())
+            currentAuthState.copy(accountListAvailable = false, accountArray = emptyArray<AccountInfo>())
         }
     }
 
     fun resetAccountListAvailable() {
         _uiState.update { currentAuthState ->
             currentAuthState.copy(accountListAvailable = false, accountArray = emptyArray<AccountInfo>())
-        }
-    }
-
-    fun submitSelectedAccount() {
-        uiState.value.selectedAccount?.let { fido.submitUserSelectedAccount(it) }
-        _uiState.update { currentUiState ->
-            currentUiState.copy(accountSelected = false)
         }
     }
 

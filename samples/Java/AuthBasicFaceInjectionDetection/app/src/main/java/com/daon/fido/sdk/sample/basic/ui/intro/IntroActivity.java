@@ -98,6 +98,7 @@ public class IntroActivity extends EdgeToEdgeActivity implements UserSignupTask.
         parameters.putString("com.daon.sdk.log", "true");
         parameters.putString("com.daon.sdk.ignoreNativeClients", "true");
         parameters.putString("com.daon.sdk.ados.enabled", "true");
+        parameters.putString("com.daon.sdk.analyticsEnabled", "true");
 
         showProgress(true);
 
@@ -235,7 +236,7 @@ public class IntroActivity extends EdgeToEdgeActivity implements UserSignupTask.
         }
 
         Bundle bundle = new Bundle();
-        bundle.putSerializable("accounts", accounts);
+        bundle.putStringArray("accounts", accounts);
 
         ChooseAccountDialogFragment chooseAccountDialogFragment = getChooseAccountDialogFragment(accountInfos, bundle);
 

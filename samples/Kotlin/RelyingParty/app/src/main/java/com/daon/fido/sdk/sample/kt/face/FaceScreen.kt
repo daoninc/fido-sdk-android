@@ -6,6 +6,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -25,7 +26,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathOperation
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -76,9 +82,6 @@ fun FaceScreen(
                 if (uiState.accountListAvailable) {
                     isAccountChooserVisible = true
                     onNavigateToAccounts(onNavigateUp, it)
-                }
-                if (uiState.accountSelected) {
-                    it.submitSelectedAccount()
                 }
             }
         }
@@ -181,52 +184,83 @@ fun FaceScreen(
                     factory = { previewView },
                     modifier = Modifier.fillMaxSize()
                 )
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxSize()
+                ) {
+                    // Add a rectangle that covers the entire canvas
+                    val path = Path().apply {
+                        addRect(Rect(0f, 0f, size.width, size.height))
+                        // Subtract an oval from the center of the rectangle
+                        op(
+                            this,
+                            Path().apply {
+                                addOval(
+                                    Rect(
+                                        left =  size.width * 0.1f,
+                                        top =  size.height * 0.2f,
+                                        right = size.width * 0.9f,
+                                        bottom = size.height * 0.8f
+                                    )
+                                )
+                            },
+                            PathOperation.Difference
+                        )
+                    }
+                    // Draw the resulting path
+                    drawPath(
+                        path = path,
+                        color = Color.Black.copy(alpha = 0.3f)
+                    )
+                }
             }
         }
 
         // Buttons layout for retake and done buttons
-        Row(
+        Column(
             modifier = Modifier
                 .constrainAs(buttonsLayout) {
                     bottom.linkTo(parent.bottom)
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
-                },
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            if (uiState.retakePhotoEnabled) {
-                Button(
-                    onClick = {viewModel.onRecapture()},
-                    colors = ButtonDefaults.buttonColors(backgroundColor = ButtonColor),
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .weight(1f)
-                ) {
-                    Text(text = "Retake", color = Color.White)
                 }
-            }
-
-            if (uiState.doneButtonEnabled) {
-                Button(
-                    onClick = {
-                        if (uiState.isEnrollment) {
-                            viewModel.register()
-                        } else {
-                            viewModel.authenticate()
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(backgroundColor = ButtonColor),
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .weight(1f)
-                ) {
-                    if (uiState.isEnrollment) {
-                        Text(text = "Register", color = Color.White)
-                    } else {
-                        Text(text = "Authenticate", color = Color.White)
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                if (uiState.retakePhotoEnabled) {
+                    Button(
+                        onClick = { viewModel.onRecapture() },
+                        colors = ButtonDefaults.buttonColors(backgroundColor = ButtonColor),
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .weight(1f)
+                    ) {
+                        Text(text = "Retake", color = Color.White)
                     }
                 }
 
+                if (uiState.doneButtonEnabled) {
+                    Button(
+                        onClick = {
+                            if (uiState.isEnrollment) {
+                                viewModel.register()
+                            } else {
+                                viewModel.authenticate()
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(backgroundColor = ButtonColor),
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .weight(1f)
+                    ) {
+                        if (uiState.isEnrollment) {
+                            Text(text = "Register", color = Color.White)
+                        } else {
+                            Text(text = "Authenticate", color = Color.White)
+                        }
+                    }
+                }
             }
         }
 

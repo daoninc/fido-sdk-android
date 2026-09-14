@@ -32,6 +32,7 @@ import com.daon.fido.client.sdk.Group
 import com.daon.fido.sdk.sample.kt.util.getBitmap
 import com.daon.fido.sdk.sample.kt.util.getGroupDescription
 import com.daon.fido.sdk.sample.kt.util.getGroupTitle
+import com.daon.fido.sdk.sample.kt.util.rememberSingleClick
 
 /**
  *
@@ -88,6 +89,12 @@ fun GroupList(groups: Array<Group>, onNavigateUp: () -> Unit, viewModel: IntroVi
 
 @Composable
 fun AuthCard(group: Group, onNavigateUp: () -> Unit, viewModel: IntroViewModel) {
+    val handleCardClick = rememberSingleClick {
+        // Update the selected authenticator and navigate back
+        viewModel.updateSelectedGroup(group)
+        onNavigateUp()
+    }
+
     // Card layout for each authenticator item
     Card(
         modifier = Modifier
@@ -95,9 +102,7 @@ fun AuthCard(group: Group, onNavigateUp: () -> Unit, viewModel: IntroViewModel) 
             .fillMaxWidth()
             .wrapContentHeight()
             .clickable {
-                // Update the selected authenticator and navigate back
-                viewModel.updateSelectedGroup(group)
-                onNavigateUp()
+                handleCardClick()
             },
         shape = MaterialTheme.shapes.medium,
     ) {

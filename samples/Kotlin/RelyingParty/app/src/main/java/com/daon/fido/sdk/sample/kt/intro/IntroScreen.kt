@@ -28,12 +28,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.daon.fido.client.sdk.Group
 import com.daon.fido.sdk.sample.kt.model.ADOS_FACE_AUTH_AAID
 import com.daon.fido.sdk.sample.kt.model.FACE_AUTH_AAID
 import com.daon.fido.sdk.sample.kt.model.FINGERPRINT_AUTH_AAID
 import com.daon.fido.sdk.sample.kt.model.PASSCODE_AUTH_AAID
 import com.daon.fido.sdk.sample.kt.model.SILENT_AUTH_AAID
+import com.daon.fido.sdk.sample.kt.model.SILENT2_AUTH_AAID
 import com.daon.fido.sdk.sample.kt.model.SRP_PASSCODE_AUTH_AAID
 import com.daon.fido.sdk.sample.kt.ui.theme.ButtonColor
 import com.daon.fido.sdk.sample.kt.util.CircularIndeterminateProgressBar
@@ -124,11 +124,9 @@ fun IntroScreen(
             if (uiState.policyAvailable) {
                 val isUpdate = uiState.policy?.isUpdate()
                 if (isUpdate == true){
-                    val groups: Array<Group>? = uiState.policy.getGroups()
-                    groups?.let { groups ->
-                        if (groups.isNotEmpty()) {
-                            viewModel.updateSelectedGroup(groups[0])
-                        }
+                    val groups = uiState.policy.getGroups()
+                    if (groups.isNotEmpty()) {
+                        viewModel.updateSelectedGroup(groups[0])
                     }
 
                 } else {
@@ -141,10 +139,6 @@ fun IntroScreen(
                 onNavigateToAccounts(onNavigateUp, viewModel)
             }
 
-
-            if (uiState.accountSelected) {
-                viewModel.submitSelectedAccount()
-            }
 
             // Handle authentication selection
             if (uiState.groupSelected) {
@@ -187,7 +181,7 @@ fun IntroScreen(
                                 Toast.LENGTH_LONG).show()
                         }
                     }
-                    SILENT_AUTH_AAID -> {
+                    SILENT_AUTH_AAID, SILENT2_AUTH_AAID -> {
                         viewModel.authenticateSilent()
                     }
                 }

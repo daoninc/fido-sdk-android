@@ -22,11 +22,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.daon.fido.sdk.sample.kt.R
 import com.daon.sdk.authenticator.controller.PasscodeControllerProtocol
 
 
@@ -45,6 +47,7 @@ fun AuthenticatePasscodeScreen(
     val focusManager = LocalFocusManager.current
     val passcodeViewModel = hiltViewModel<PasscodeViewModel>()
     val context = LocalContext.current
+    val emptyPasscodeMessage = stringResource(R.string.passcode_empty)
     var textValue1 by remember { mutableStateOf(TextFieldValue("")) }
 
     // Starting the ViewModel when the composable enters the composition
@@ -116,8 +119,16 @@ fun AuthenticatePasscodeScreen(
                 keyboardType = KeyboardType.NumberPassword
             ),
             keyboardActions = KeyboardActions(onNext = {
-                focusManager.clearFocus()
-                passcodeViewModel.authenticate(textValue1.text)
+                if (textValue1.text.isEmpty()) {
+                    Toast.makeText(
+                        context,
+                        emptyPasscodeMessage,
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    focusManager.clearFocus()
+                    passcodeViewModel.authenticate(textValue1.text)
+                }
             })
 
         )

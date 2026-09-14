@@ -14,6 +14,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,10 +72,13 @@ fun FingerprintScreen(
     }
 
     //Handle fingerprint capture completion
-    val captureComplete = fingerprintViewModel.captureComplete.collectAsState()
-    if (captureComplete.value) {
-        fingerprintViewModel.resetCaptureComplete()
-        onNavigateUp()
+    LaunchedEffect(key1 = fingerprintViewModel.captureComplete) {
+        fingerprintViewModel.captureComplete.collect { captureComplete ->
+            if (captureComplete) {
+                fingerprintViewModel.resetCaptureComplete()
+                onNavigateUp()
+            }
+        }
     }
 
     // Handle back button press

@@ -312,7 +312,10 @@ class RestService (private val context: Context, private val params: Bundle): IX
                         "serviceAuthenticate responseCode : ${authResponse.fidoResponseCode.toShort()}"
                     )
                     result.putString(IXUAF.RESPONSE_MESSAGE, authResponse.fidoResponseMsg)
-                    result.putString(IXUAF.EMAIL, authResponse.userId)
+                    val userId = authResponse.userId ?: params.getString(IXUAF.USERNAME)
+                    if (userId != null) {
+                        result.putString(IXUAF.EMAIL, userId)
+                    }
                     // create session
                     //result.putString("lastLoggedIn", authResponse.lastLoggedIn.toString())
                     //result.putString("loggedInWith", authResponse.loggedInWith.toString())

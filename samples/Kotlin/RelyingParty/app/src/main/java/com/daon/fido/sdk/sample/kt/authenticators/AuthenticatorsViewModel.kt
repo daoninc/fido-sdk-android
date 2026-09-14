@@ -15,6 +15,7 @@ import com.daon.fido.client.sdk.Success
 import com.daon.fido.client.sdk.model.Authenticator
 import com.daon.fido.client.sdk.util.SDKPreferences
 import com.daon.fido.sdk.sample.kt.BaseViewModel
+import com.daon.fido.sdk.sample.kt.model.FINGERPRINT_AUTH_AAID
 import com.daon.sdk.authenticator.controller.FingerprintCaptureControllerProtocol
 import com.daon.sdk.authenticator.controller.PasscodeControllerProtocol
 import com.daon.sdk.authenticator.exception.ControllerInitializationException
@@ -105,8 +106,14 @@ class AuthenticatorsViewModel @Inject constructor(
                     resultArray.add(auth)
                 }
             }
-            _discoverList.clear()
-            _discoverList.addAll(resultArray)
+
+            viewModelScope.launch(Dispatchers.Main) {
+                _discoverList.apply {
+                    clear()
+                    addAll(resultArray)
+                }
+            }
+
 
         }.onFailure {
             //Handle failure here
@@ -311,7 +318,7 @@ class AuthenticatorsViewModel @Inject constructor(
     fun getFingerprintController(): FingerprintCaptureControllerProtocol? {
         return try {
             _authState.value.group?.let { group ->
-                fido.getController(getApplication(), group) as? FingerprintCaptureControllerProtocol
+                fido.getController(getApplication(), FINGERPRINT_AUTH_AAID) as? FingerprintCaptureControllerProtocol
             }
         } catch (e: ControllerInitializationException) {
             null

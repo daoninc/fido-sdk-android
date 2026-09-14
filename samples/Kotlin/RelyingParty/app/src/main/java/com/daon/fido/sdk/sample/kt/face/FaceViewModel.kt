@@ -14,7 +14,6 @@ import com.daon.sdk.authenticator.Authenticator
 import com.daon.sdk.authenticator.ErrorCodes
 import com.daon.sdk.authenticator.controller.CaptureCompleteListener
 import com.daon.sdk.authenticator.controller.CaptureCompleteResult
-import com.daon.sdk.authenticator.exception.ControllerInitializationException
 import com.daon.sdk.face.LivenessResult
 import com.daon.sdk.face.Result
 import com.daon.sdk.face.capture.FaceDetectionListener
@@ -83,34 +82,23 @@ class FaceViewModel @Inject constructor(
      * @param previewView The PreviewView to display the camera preview.
      */
     fun startCapture(controller: FaceControllerProtocol, lifecycleOwner: LifecycleOwner, previewView: PreviewView? = null) {
+      faceController = controller
 
-      try {
-          faceController = controller
+      this.lifecycleOwner = lifecycleOwner
 
-          this.lifecycleOwner = lifecycleOwner
+      faceController.startCamera(
+          getApplication<Application>().baseContext,
+          lifecycleOwner,
+          previewView,
+          Bundle(),
+          FaceDetectionHandler(),
+          PhotoHandler(),
+          CaptureCompleteHandler()
+      )
+      faceController.startFaceCapture()
 
-          faceController.startCamera(
-              getApplication<Application>().baseContext,
-              lifecycleOwner,
-              previewView,
-              Bundle(),
-              FaceDetectionHandler(),
-              PhotoHandler(),
-              CaptureCompleteHandler()
-          )
-          faceController.startFaceCapture()
+      getAuthenticationMode()
 
-          getAuthenticationMode()
-      } catch (e: ControllerInitializationException) {
-          _faceCaptureState.update { currentUIState ->
-                currentUIState.copy(
-                    captureMessage = "Error: ${e.message}",
-                    captureComplete = true
-                )
-            }
-
-          cancelCurrentOperation()
-      }
     }
 
     /**
@@ -156,6 +144,17 @@ class FaceViewModel @Inject constructor(
                    infoTextVisible = false
                )
            }
+           //Auto capture for authentication
+           if (faceUIState.value.isEnrollment) {
+               _faceUIState.update { currentUIState ->
+                   currentUIState.copy(
+                       doneButtonEnabled = true
+                   )
+               }
+           } else {
+               authenticate()
+           }
+
        }
 
    }

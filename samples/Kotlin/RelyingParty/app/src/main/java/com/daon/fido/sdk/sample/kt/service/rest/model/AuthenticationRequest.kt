@@ -11,8 +11,7 @@ data class AuthenticationRequest (var id: String?,
                                   var fidoAuthenticationResponse: String,
                                   var fidoResponseCode: Long,
                                   var fidoResponseMsg: String,
-                                  var userId: String,
+                                  var userId: String?,
                                   var transactionContentType: String,
                                   var textTransactionContent: String,
                                   var imageTransactionContent: String)
-

@@ -7,4 +7,5 @@
     <string name="transaction_validation_success">Transaction validated successfully</string>
     <string name="transaction_text_content">Pay $50 to acme.com</string>
     <string name="user_lock_warning">One attempt remaining until user account is blocked</string>
+    <string name="passcode_empty">Passcode cannot be empty</string>
 </resources>

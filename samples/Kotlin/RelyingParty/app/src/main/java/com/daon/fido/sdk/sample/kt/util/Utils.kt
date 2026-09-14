@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -17,6 +19,8 @@ import com.daon.fido.client.sdk.Group
 import com.daon.fido.client.sdk.ui.AuthenticatorSet
 import com.daon.fido.client.sdk.ui.PagedUIAuthenticator
 import com.daon.sdk.authenticator.Authenticator
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.debounce
 
 /**
  * Composable function to display a circular indeterminate progress bar.
@@ -35,6 +39,22 @@ fun CircularIndeterminateProgressBar(isDisplayed: Boolean) {
 
         }
     }
+}
+
+@Composable
+fun rememberSingleClick(
+    debounceTime: Long = 600L,
+    action: () -> Unit
+): () -> Unit {
+    val clickFlow = remember { MutableSharedFlow<Unit>(extraBufferCapacity = 1) }
+
+    LaunchedEffect(clickFlow) {
+        clickFlow
+            .debounce(debounceTime)
+            .collect { action() }
+    }
+
+    return { clickFlow.tryEmit(Unit) }
 }
 
 // Get the ImageBitmap from the base64 encoded string

@@ -4,6 +4,7 @@ package com.daon.fido.sdk.sample.kt.model
  * Authenticator AAID constants.
  */
 const val SILENT_AUTH_AAID = "D409#0602"
+const val SILENT2_AUTH_AAID = "D409#0603"
 const val FACE_AUTH_AAID = "D409#0205"
 const val ADOS_FACE_AUTH_AAID = "D409#8201"
 const val VOICE_AUTH_AAID = "D409#0402"

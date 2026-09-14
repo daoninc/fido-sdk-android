@@ -15,6 +15,7 @@ import com.daon.fido.client.sdk.transaction.TransactionContent
 import com.daon.fido.client.sdk.transaction.TransactionUtils
 import com.daon.fido.sdk.sample.kt.BaseViewModel
 import com.daon.fido.sdk.sample.kt.R
+import com.daon.fido.sdk.sample.kt.model.FINGERPRINT_AUTH_AAID
 import com.daon.sdk.authenticator.controller.FingerprintCaptureControllerProtocol
 import com.daon.sdk.authenticator.controller.PasscodeControllerProtocol
 import com.daon.sdk.authenticator.exception.ControllerInitializationException
@@ -327,7 +328,7 @@ class HomeViewModel @Inject constructor(application: Application, private val fi
     fun getFingerprintController(): FingerprintCaptureControllerProtocol? {
         return try {
             _transactionState.value.group?.let { group ->
-                fido.getController(getApplication(), group) as? FingerprintCaptureControllerProtocol
+                fido.getController(getApplication(), FINGERPRINT_AUTH_AAID) as? FingerprintCaptureControllerProtocol
             }
         } catch (e: ControllerInitializationException) {
             Log.d("DAON", "getFingerprintController: ${e.message}")

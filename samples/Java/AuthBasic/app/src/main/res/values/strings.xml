@@ -63,10 +63,6 @@
     <string name="face_camera_access_denied">Camera access denied. Face capture cannot proceed.</string>
     <string name="face_liveness_hmd_face_not_detected">No face detected</string>
     <string name="face_liveness_hmd_face_not_centered">Center face</string>
-    <string name="face_liveness_hmd_motion_too_fast">Motion too fast</string>
-    <string name="face_liveness_hmd_motion_swing_too_fast">Nod/Shake movement too fast</string>
-    <string name="face_liveness_hmd_motion_too_far">Nod/Shake movement too far</string>
-    <string name="face_liveness_hmd_too_close_to_edge">Face is too close to the edge</string>
     <string name="face_liveness_hmd_too_near">Face too close</string>
     <string name="face_liveness_hmd_too_far">Face too far away</string>
     <string name="face_liveness_hmd_spoof">Spoof detected</string>

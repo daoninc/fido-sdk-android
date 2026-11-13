@@ -3,17 +3,26 @@ package com.daon.fido.sdk.sample.kt.home
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.material.*
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,6 +57,7 @@ fun HomeScreen(
 
     // Collect the inProgress state from the ViewModel
     val inProgress = viewModel.inProgress.collectAsState()
+    val singleShotPolicy by viewModel.singleShotPolicy.collectAsState()
 
     // Observe the transaction state from the ViewModel
     LaunchedEffect(key1 = viewModel.transactionState) {
@@ -152,7 +162,9 @@ fun HomeScreen(
 
     // Home screen layout
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(vertical = 24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
 
@@ -177,6 +189,12 @@ fun HomeScreen(
         ) {
             Text(text = stringResource(R.string.action_step_up_auth))
         }
+        Spacer(modifier = Modifier.height(height = 10.dp))
+        SingleShotPolicySelector(
+            policy = singleShotPolicy,
+            onPolicySelected = viewModel::selectSingleShotPolicy,
+            enabled = !inProgress.value
+        )
         Spacer(modifier = Modifier.height(height = 10.dp))
         Button(
             onClick = {
@@ -215,4 +233,44 @@ fun HomeScreen(
         viewModel.doLogout()
         backToIntro()
     })
+}
+
+@Composable
+private fun SingleShotPolicySelector(
+    policy: SingleShotPolicy,
+    onPolicySelected: (SingleShotPolicy) -> Unit,
+    enabled: Boolean
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Column(
+        modifier = Modifier.widthIn(max = 360.dp).fillMaxWidth().padding(horizontal = 16.dp)
+    ) {
+        Text(text = stringResource(R.string.single_shot_policy_label))
+        Box {
+            OutlinedButton(
+                onClick = { expanded = true },
+                enabled = enabled,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = stringResource(policy.labelResId), modifier = Modifier.weight(1f))
+                Text(text = "\u25BE", modifier = Modifier.clearAndSetSemantics { })
+            }
+            DropdownMenu(
+                expanded = expanded && enabled,
+                onDismissRequest = { expanded = false }
+            ) {
+                SingleShotPolicy.entries.forEach { option ->
+                    DropdownMenuItem(
+                        onClick = {
+                            onPolicySelected(option)
+                            expanded = false
+                        },
+                        modifier = Modifier.semantics { selected = option == policy }
+                    ) {
+                        Text(text = stringResource(option.labelResId))
+                    }
+                }
+            }
+        }
+    }
 }

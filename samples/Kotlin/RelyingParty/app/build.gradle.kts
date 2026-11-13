@@ -17,7 +17,7 @@ android {
         minSdk = 24
         targetSdk = 36
         versionCode = 1
-        versionName = "4.10"
+        versionName = "4.11"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -55,6 +55,13 @@ kotlin {
     }
 }
 
+// Pin AndroidX Core to retain FingerprintManagerCompat discovery on Android 8; Core 1.18.0 removes this support.
+configurations.configureEach {
+    resolutionStrategy.force(
+        "androidx.core:core:1.17.0",
+        "androidx.core:core-ktx:1.17.0"
+    )
+}
 
 dependencies {
 
@@ -68,7 +75,7 @@ dependencies {
     implementation(libs.daon.face)
     implementation(libs.daon.face.capture)
     implementation(libs.daon.face.quality)
-    implementation(libs.daon.face.liveness)
+    implementation(libs.daon.face.liveness.dfl)
     implementation(libs.daon.face.matcher)
     implementation(libs.daon.face.detector)
 

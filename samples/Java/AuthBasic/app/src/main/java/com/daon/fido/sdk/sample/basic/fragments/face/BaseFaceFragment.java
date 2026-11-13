@@ -213,12 +213,6 @@ public abstract class BaseFaceFragment extends BaseCaptureFragment implements Fa
                     R.string.face_liveness_hmd_face_not_detected;
             case LivenessResult.ALERT_FACE_NOT_CENTERED ->
                     R.string.face_liveness_hmd_face_not_centered;
-            case LivenessResult.ALERT_MOTION_TOO_FAST -> R.string.face_liveness_hmd_motion_too_fast;
-            case LivenessResult.ALERT_MOTION_SWING_TOO_FAST ->
-                    R.string.face_liveness_hmd_motion_swing_too_fast;
-            case LivenessResult.ALERT_MOTION_TOO_FAR -> R.string.face_liveness_hmd_motion_too_far;
-            case LivenessResult.ALERT_FACE_TOO_CLOSE_TO_EDGE ->
-                    R.string.face_liveness_hmd_too_close_to_edge;
             case LivenessResult.ALERT_FACE_TOO_NEAR -> R.string.face_liveness_hmd_too_near;
             case LivenessResult.ALERT_FACE_TOO_FAR -> R.string.face_liveness_hmd_too_far;
             case LivenessResult.ALERT_LIVENESS_SPOOF -> R.string.face_liveness_hmd_spoof;

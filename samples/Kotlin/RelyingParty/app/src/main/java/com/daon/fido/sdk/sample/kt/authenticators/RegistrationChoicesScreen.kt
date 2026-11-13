@@ -24,6 +24,10 @@ import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -46,6 +50,15 @@ fun RegistrationChoicesScreen(onNavigateUp: () -> Unit, viewModel: Authenticator
     val state = viewModel.authState.collectAsState()
     val policy = state.value.policy
     val groups = policy?.getGroups()
+    var selectionInProgress by remember { mutableStateOf(false) }
+
+    val onGroupSelected: (Group) -> Unit = { group ->
+        if (!selectionInProgress) {
+            selectionInProgress = true
+            viewModel.updateSelectedGroup(group)
+            onNavigateUp()
+        }
+    }
 
     // Screen layout
     Scaffold(
@@ -58,7 +71,7 @@ fun RegistrationChoicesScreen(onNavigateUp: () -> Unit, viewModel: Authenticator
         modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars)
     ) {
         if (groups != null) {
-            GroupList(groups, onNavigateUp, viewModel, it)
+            GroupList(groups, it, selectionInProgress, onGroupSelected)
         }
     }
 
@@ -71,12 +84,17 @@ fun RegistrationChoicesScreen(onNavigateUp: () -> Unit, viewModel: Authenticator
 }
 
 @Composable
-fun GroupList(groups: Array<Group>, onNavigateUp: () -> Unit, viewModel: AuthenticatorsViewModel, padding: PaddingValues) {
+fun GroupList(
+    groups: Array<Group>,
+    padding: PaddingValues,
+    selectionInProgress: Boolean,
+    onGroupSelected: (Group) -> Unit
+) {
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = padding) {
         items(groups) { group ->
             // Exclude creating an AuthCard for groups containing any of the following factors: VOICE, ADOS_VOICE, OTP, and PATTERN
             if (isAuthenticatorGroupSupported(group)) {
-                AuthCard(group, onNavigateUp, viewModel)
+                AuthCard(group, selectionInProgress, onGroupSelected)
             }
 
         }
@@ -84,17 +102,20 @@ fun GroupList(groups: Array<Group>, onNavigateUp: () -> Unit, viewModel: Authent
 }
 
 @Composable
-fun AuthCard(group: Group, onNavigateUp: () -> Unit, viewModel: AuthenticatorsViewModel) {
+fun AuthCard(
+    group: Group,
+    selectionInProgress: Boolean,
+    onGroupSelected: (Group) -> Unit
+) {
     // Card layout for each authenticator item
     Card(
         modifier = Modifier
             .padding(10.dp)
             .fillMaxWidth()
             .wrapContentHeight()
-            .clickable {
+            .clickable(enabled = !selectionInProgress) {
                 // Update the selected authenticator and navigate back
-                viewModel.updateSelectedGroup(group)
-                onNavigateUp()
+                onGroupSelected(group)
             },
         shape = MaterialTheme.shapes.medium,
     ) {
@@ -130,7 +151,6 @@ private fun isAuthenticatorGroupSupported(group: Group): Boolean {
     val unsupportedFactors = setOf(Authenticator.Factor.OTP, Authenticator.Factor.VOICE, Authenticator.Factor.PATTERN)
     return unsupportedFactors.none { group.getAuthenticatorSet().containsFactor(it) }
 }
-
 
 
 

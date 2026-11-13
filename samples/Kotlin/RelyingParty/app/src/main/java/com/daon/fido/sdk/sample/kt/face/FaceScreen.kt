@@ -1,15 +1,27 @@
 package com.daon.fido.sdk.sample.kt.face
 import android.Manifest
-import android.app.Activity
 import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.CircularProgressIndicator
@@ -20,29 +32,26 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathOperation
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.Dimension
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.daon.fido.sdk.sample.kt.intro.IntroViewModel
 import com.daon.fido.sdk.sample.kt.ui.theme.ButtonColor
 import com.daon.sdk.faceauthenticator.controller.FaceControllerProtocol
@@ -71,16 +80,24 @@ fun FaceScreen(
     val captureState by viewModel.faceCaptureState.collectAsState()
 
     val context = LocalContext.current
+    val activity = requireNotNull(LocalActivity.current)
     val lifecycleOwner = LocalLifecycleOwner.current
-    val previewView = remember { PreviewView(context) }
-    
-    var isAccountChooserVisible by rememberSaveable { mutableStateOf(false) }
+    val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
+    val previewView = remember(context) { PreviewView(context) }
+    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+    DisposableEffect(activity) {
+        val previousOrientation = activity.requestedOrientation
+        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+        onDispose {
+            activity.requestedOrientation = previousOrientation
+        }
+    }
 
     introViewModel?.let {
         LaunchedEffect(key1 = it.uiState) {
             it.uiState.collect { uiState ->
                 if (uiState.accountListAvailable) {
-                    isAccountChooserVisible = true
                     onNavigateToAccounts(onNavigateUp, it)
                 }
             }
@@ -89,7 +106,7 @@ fun FaceScreen(
 
     val permissionState = rememberPermissionState(permission = Manifest.permission.CAMERA)
     // Handle lifecycle events to request camera permission
-    DisposableEffect(key1 = lifecycleOwner, effect = {
+    DisposableEffect(lifecycleOwner, permissionState) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_START) {
                 if (permissionState.status.isGranted) {
@@ -98,34 +115,31 @@ fun FaceScreen(
                     permissionState.launchPermissionRequest()
                 }
             }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
 
-            if (event == Lifecycle.Event.ON_RESUME) {
-                if (!isAccountChooserVisible) {
-                    viewModel.startCapture(faceController, lifecycleOwner, previewView)
-                } else {
-                    isAccountChooserVisible = false
-                }
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
+    val permissionGranted = permissionState.status.isGranted
+    DisposableEffect(lifecycleOwner, previewView, faceController, viewModel, permissionGranted) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME && permissionGranted) {
+                viewModel.startCapture(faceController, lifecycleOwner, previewView)
             }
             if (event == Lifecycle.Event.ON_STOP) {
-                if (!isAccountChooserVisible) {
-                    viewModel.resetFaceUIState()
-                    viewModel.stopCapture()
-                }
+                viewModel.stopCapture()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
 
-        val activity = context as Activity
-        activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
-
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            viewModel.stopCapture()
         }
-
-    })
-
+    }
 
     // Handle capture state changes
     LaunchedEffect(key1 = captureState) {
@@ -139,8 +153,10 @@ fun FaceScreen(
         }
     }
 
-    LaunchedEffect(key1 = uiState.recaptureEnabled) {
-        if (uiState.recaptureEnabled) {
+    LaunchedEffect(
+        uiState.recaptureEnabled, permissionGranted, lifecycleState, lifecycleOwner, faceController, previewView
+    ) {
+        if (uiState.recaptureEnabled && permissionGranted && lifecycleState.isAtLeast(Lifecycle.State.RESUMED)) {
             viewModel.onRecapture(faceController, lifecycleOwner, previewView)
         }
     }
@@ -166,8 +182,15 @@ fun FaceScreen(
                 .constrainAs(previewLayout) {
                     top.linkTo(parent.top)
                     start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-                    bottom.linkTo(buttonsLayout.top)
+                    if (isLandscape) {
+                        end.linkTo(buttonsLayout.start)
+                        bottom.linkTo(parent.bottom)
+                    } else {
+                        end.linkTo(parent.end)
+                        bottom.linkTo(buttonsLayout.top)
+                    }
+                    width = Dimension.fillToConstraints
+                    height = Dimension.fillToConstraints
                 }
         ) {
             if (uiState.previewImageVisible) {
@@ -176,7 +199,7 @@ fun FaceScreen(
                     Image(
                         bitmap = imageBitmap,
                         contentDescription = "Preview Image",
-                        modifier = Modifier.padding(50.dp)
+                        modifier = Modifier.fillMaxSize().padding(16.dp)
                     )
                 }
             } else {
@@ -188,6 +211,8 @@ fun FaceScreen(
                     modifier = Modifier
                         .fillMaxSize()
                 ) {
+                    val ovalHeight = (size.height * 0.8f).coerceAtMost(size.width * 1.2f)
+                    val ovalWidth = ovalHeight * 2f / 3f
                     // Add a rectangle that covers the entire canvas
                     val path = Path().apply {
                         addRect(Rect(0f, 0f, size.width, size.height))
@@ -197,10 +222,10 @@ fun FaceScreen(
                             Path().apply {
                                 addOval(
                                     Rect(
-                                        left =  size.width * 0.1f,
-                                        top =  size.height * 0.2f,
-                                        right = size.width * 0.9f,
-                                        bottom = size.height * 0.8f
+                                        left = (size.width - ovalWidth) / 2f,
+                                        top = (size.height - ovalHeight) / 2f,
+                                        right = (size.width + ovalWidth) / 2f,
+                                        bottom = (size.height + ovalHeight) / 2f
                                     )
                                 )
                             },
@@ -221,11 +246,22 @@ fun FaceScreen(
             modifier = Modifier
                 .constrainAs(buttonsLayout) {
                     bottom.linkTo(parent.bottom)
-                    start.linkTo(parent.start)
                     end.linkTo(parent.end)
+                    if (isLandscape) {
+                        top.linkTo(parent.top)
+                        start.linkTo(previewLayout.end)
+                        width = Dimension.percent(0.35f)
+                        height = Dimension.fillToConstraints
+                    } else {
+                        start.linkTo(parent.start)
+                        width = Dimension.fillToConstraints
+                    }
                 }
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.Center
         ) {
             Row(
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 if (uiState.retakePhotoEnabled) {
@@ -270,10 +306,18 @@ fun FaceScreen(
                 text = uiState.infoText,
                 modifier = Modifier
                     .constrainAs(infoTextView) {
-                        top.linkTo(parent.top, margin = 24.dp)
-                        bottom.linkTo(parent.bottom)
-                        start.linkTo(parent.start)
-                        end.linkTo(parent.end)
+                        if (isLandscape) {
+                            top.linkTo(buttonsLayout.top)
+                            bottom.linkTo(buttonsLayout.bottom)
+                            start.linkTo(buttonsLayout.start)
+                            end.linkTo(buttonsLayout.end)
+                        } else {
+                            top.linkTo(previewLayout.top, margin = 24.dp)
+                            bottom.linkTo(previewLayout.bottom)
+                            start.linkTo(previewLayout.start)
+                            end.linkTo(previewLayout.end)
+                        }
+                        width = Dimension.fillToConstraints
                     }
                     .background(Color.Transparent)
                     .padding(16.dp),

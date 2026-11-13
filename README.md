@@ -35,19 +35,19 @@ In your project-level build.gradle file, make sure to include the Daon Maven rep
 Add the following dependencies to the build.gradle file:
 
 ```gradle
-implementation 'com.daon.sdk:fido-kt:4.10.24'
-implementation 'com.daon.sdk:fido-device:4.9.13'
-implementation 'com.daon.sdk:fido-crypto:4.9.18'
-implementation 'com.daon.sdk:fido-auth-authenticator:4.10.24'
+implementation 'com.daon.sdk:fido-kt:4.11.7'
+implementation 'com.daon.sdk:fido-device:4.9.15'
+implementation 'com.daon.sdk:fido-crypto:4.9.19'
+implementation 'com.daon.sdk:fido-auth-authenticator:4.11.7'
 
 // Face authenticator with Injection Attack Detection
-implementation 'com.daon.sdk:fido-auth-face-ifp:4.10.24'
-implementation 'com.daon.sdk:face:5.3.98'
+implementation 'com.daon.sdk:fido-auth-face-ifp:4.11.7'
+implementation 'com.daon.sdk:face:5.5.19'
 implementation 'com.daon.sdk:face-quality:3.2.109'
-implementation 'com.daon.sdk:face-capture:2.0.98'
+implementation 'com.daon.sdk:face-capture:2.6.19'
 
-// Optional client side passive liveness V1
-implementation 'com.daon.sdk:face-liveness:5.3.98'
+// Optional client side passive liveness V2
+implementation 'com.daon.sdk:face-liveness-dfl:1.0.1'
 
 // Continuity checks and local face matching
 implementation 'com.daon.sdk:face-matcher:1.3.108'
@@ -63,7 +63,16 @@ implementation "androidx.camera:camera-lifecycle:${camerax_version}"
 implementation "androidx.camera:camera-video:${camerax_version}"
 implementation "androidx.camera:camera-view:${camerax_version}"
 implementation "androidx.camera:camera-extensions:${camerax_version}"
+
+// Retain FingerprintManagerCompat discovery on Android 8.
+configurations.configureEach {
+    resolutionStrategy.force 'androidx.core:core:1.17.0', 'androidx.core:core-ktx:1.17.0'
+}
 ```
+
+The samples use the released FIDO SDK 4.11.7 dependencies. Both AndroidX Core artifacts are
+pinned to 1.17.0 because Core 1.18.0 removes the fingerprint compatibility support used on
+Android 8. Face SDK 5.5 uses `face-liveness-dfl`; do not add the removed `face-liveness` V1 artifact.
 
 The face capture library is part of the [xProof Face SDK](https://github.com/daoninc/face-sdk-android) and is used to capture images of the user's face for authentication. 
 
@@ -143,4 +152,3 @@ viewModelScope.launch(Dispatchers.Default) {
 ```
 
 See included samples and [xAuth FIDO SDK Documentation](https://developer.identityx-cloud.com/client/fido/android/) for details and additional information.
-

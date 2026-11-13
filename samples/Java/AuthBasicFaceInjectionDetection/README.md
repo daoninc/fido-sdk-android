@@ -26,7 +26,9 @@ attack prevention when used with the IdentityX server. The app is built with Jav
 ### `gradle/libs.versions.toml`
 
 This file contains the dependencies and their versions used in the project. Ensure that the versions 
-are up-to-date.
+are up-to-date. Face SDK 5.5 artifacts must support `compileSdk` 36. Passive face liveness
+uses `com.daon.sdk:face-liveness-dfl`; the legacy `com.daon.sdk:face-liveness` artifact
+is no longer available.
 
 ## Usage
 

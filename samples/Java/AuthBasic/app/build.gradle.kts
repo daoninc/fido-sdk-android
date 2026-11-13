@@ -13,7 +13,7 @@ android {
         minSdk = 24
         targetSdk = 36
         versionCode = 1
-        versionName = "4.10"
+        versionName = "4.11"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -42,12 +42,19 @@ kotlin {
     }
 }
 
+// Pin AndroidX Core to retain FingerprintManagerCompat discovery on Android 8; Core 1.18.0 removes this support.
+configurations.configureEach {
+    resolutionStrategy.force(
+        "androidx.core:core:1.17.0",
+        "androidx.core:core-ktx:1.17.0"
+    )
+}
+
 dependencies {
     implementation(libs.daon.fido)
     implementation(libs.daon.fido.device)
     implementation(libs.daon.fido.crypto)
 
-    //implementation(libs.daon.fido.auth.common)
     implementation(libs.daon.fido.auth.authenticator)
     implementation(libs.daon.fido.auth.face)
 
@@ -62,7 +69,7 @@ dependencies {
 
     implementation(libs.appcompat)
     implementation(libs.material)
-    implementation(libs.constraintlayout.compose)
+    implementation(libs.constraintlayout)
     implementation(libs.gson)
     implementation(libs.biometric)
     implementation(libs.androidx.core)

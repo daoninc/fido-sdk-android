@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.util.Log
+import android.util.Size
 import androidx.camera.view.PreviewView
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.viewModelScope
@@ -73,40 +74,59 @@ class FaceViewModel @Inject constructor(
     val faceCaptureState = _faceCaptureState
 
 
-    lateinit var faceController: FaceControllerProtocol
-    private lateinit var  lifecycleOwner: LifecycleOwner
+    private lateinit var faceController: FaceControllerProtocol
+    private var isCaptureActive = false
 
     /**
      * Starts the face capture process.
      * @param lifecycleOwner The LifecycleOwner associated with the capture process.
      * @param previewView The PreviewView to display the camera preview.
      */
-    fun startCapture(controller: FaceControllerProtocol, lifecycleOwner: LifecycleOwner, previewView: PreviewView? = null) {
-      faceController = controller
+    fun startCapture(controller: FaceControllerProtocol, lifecycleOwner: LifecycleOwner, previewView: PreviewView) {
+        val state = _faceUIState.value
+        if (isCaptureActive || state.previewImageVisible || state.inProgress || state.recaptureEnabled ||
+            _faceCaptureState.value.captureComplete) {
+            return
+        }
 
-      this.lifecycleOwner = lifecycleOwner
-
-      faceController.startCamera(
-          getApplication<Application>().baseContext,
-          lifecycleOwner,
-          previewView,
-          Bundle(),
-          FaceDetectionHandler(),
-          PhotoHandler(),
-          CaptureCompleteHandler()
-      )
-      faceController.startFaceCapture()
-
-      getAuthenticationMode()
-
+        faceController = controller
+        resetFaceUIState()
+        getAuthenticationMode()
+        isCaptureActive = true
+        var captureStarted = false
+        try {
+            faceController.startCamera(
+                previewView.context,
+                lifecycleOwner,
+                previewView,
+                Size(640, 480),
+                Bundle(),
+                FaceDetectionHandler(),
+                PhotoHandler(),
+                CaptureCompleteHandler()
+            )
+            faceController.startFaceCapture()
+            captureStarted = true
+        } finally {
+            if (!captureStarted) {
+                stopCapture()
+            }
+        }
     }
 
     /**
      * Stops the face capture process.
      */
     fun stopCapture() {
-        if (this::faceController.isInitialized)
+        if (isCaptureActive) {
+            isCaptureActive = false
             faceController.stopFaceCapture()
+        }
+    }
+
+    override fun onCleared() {
+        stopCapture()
+        super.onCleared()
     }
 
     /**

@@ -10,7 +10,7 @@ android {
         minSdk = 24
         targetSdk = 36
         versionCode = 1
-        versionName = "4.10"
+        versionName = "4.11"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -33,6 +33,14 @@ android {
     namespace = "com.daon.fido.sdk.sample.basic"
 }
 
+// Pin AndroidX Core to retain FingerprintManagerCompat discovery on Android 8; Core 1.18.0 removes this support.
+configurations.configureEach {
+    resolutionStrategy.force(
+        "androidx.core:core:1.17.0",
+        "androidx.core:core-ktx:1.17.0"
+    )
+}
+
 dependencies {
     implementation(libs.daon.fido)
     implementation(libs.daon.fido.device)
@@ -45,8 +53,7 @@ dependencies {
     // Daon Face
     implementation(libs.daon.face)
     implementation(libs.daon.face.quality)
-    //Daon Passive
-    implementation(libs.daon.face.liveness)
+    implementation(libs.daon.face.liveness.dfl)
     implementation(libs.daon.face.matcher)
     implementation(libs.daon.face.detector)
     implementation(libs.daon.face.capture)
@@ -60,7 +67,6 @@ dependencies {
     implementation(libs.play.integrity)
     implementation(libs.androidx.preference)
 
-    // Used by com.daon.sdk.face.liveness
     // CameraX core library
     implementation(libs.camera.core)
     implementation(libs.camera.camera2)

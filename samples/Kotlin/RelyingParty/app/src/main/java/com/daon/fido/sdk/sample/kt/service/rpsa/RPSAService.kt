@@ -12,6 +12,9 @@ import com.daon.fido.client.sdk.core.SingleShotAuthenticationRequest
 import com.daon.fido.client.sdk.model.Operation
 import com.daon.fido.client.sdk.model.UafProtocolMessageBase
 import com.daon.fido.client.sdk.uaf.UafMessageUtils
+import com.daon.fido.sdk.sample.kt.model.FINGERPRINT_AUTH_AAID
+import com.daon.fido.sdk.sample.kt.model.SILENT_AUTH_AAID
+import com.daon.fido.sdk.sample.kt.model.SingleShotPolicy
 import com.daon.fido.sdk.sample.kt.service.rpsa.model.AuthenticatorInfo
 import com.daon.fido.sdk.sample.kt.service.rpsa.model.CreateAccount
 import com.daon.fido.sdk.sample.kt.service.rpsa.model.CreateAccountResponse
@@ -262,17 +265,37 @@ class RPSAService (private val context: Context, private val params: Bundle): IX
                 if (singleshot) {
                     try {
                         val appId = params.getString(IXUAF.APP_ID)
-                        val ssar =
-                            SingleShotAuthenticationRequest.createUserAuthWithAllRegisteredAuthenticators(
-                                context, appId, username
-                            )
-                        ssar.addExtension("com.daon.face.ados.mode", "verify")
-                        ssar.addExtension("com.daon.face.retriesRemaining", "5")
-                        ssar.addExtension("com.daon.face.liveness.passive.type", "server")
-                        ssar.addExtension("com.daon.passcode.type", "ALPHANUMERIC")
-                        ssar.addExtension("com.daon.face.liveness.active.type", "none")
-                        //Add the decChain extension value here
-                        //ssar.addExtension("com.daon.sdk.ados.decChain", decChain)
+                        require(!username.isNullOrBlank()) {
+                            "Username is required for single-shot step-up authentication"
+                        }
+                        val policy = SingleShotPolicy.fromParameter(params.getString(SingleShotPolicy.PARAMETER_KEY))
+                        val ssar = when (policy) {
+                            SingleShotPolicy.ALL_REGISTERED ->
+                                SingleShotAuthenticationRequest.createUserAuthWithAllRegisteredAuthenticators(
+                                    context, appId, username
+                                )
+                            SingleShotPolicy.SILENT ->
+                                SingleShotAuthenticationRequest.createUserAuthWithAuthenticator(
+                                    context, appId, username, SILENT_AUTH_AAID
+                                )
+                            SingleShotPolicy.FINGERPRINT ->
+                                SingleShotAuthenticationRequest.createUserAuthWithAuthenticator(
+                                    context, appId, username, FINGERPRINT_AUTH_AAID
+                                )
+                            SingleShotPolicy.SILENT_AND_FINGERPRINT ->
+                                SingleShotAuthenticationRequest.createUserAuthWithAndPolicy(
+                                    context, appId, username, arrayOf(SILENT_AUTH_AAID, FINGERPRINT_AUTH_AAID)
+                                )
+                        }
+                        if (policy == SingleShotPolicy.ALL_REGISTERED) {
+                            ssar.addExtension("com.daon.face.ados.mode", "verify")
+                            ssar.addExtension("com.daon.face.retriesRemaining", "5")
+                            ssar.addExtension("com.daon.face.liveness.passive.type", "server")
+                            ssar.addExtension("com.daon.passcode.type", "ALPHANUMERIC")
+                            ssar.addExtension("com.daon.face.liveness.active.type", "none")
+                            // Add the decChain extension value here if required by the server configuration.
+                            // ssar.addExtension("com.daon.sdk.ados.decChain", decChain)
+                        }
                         val result = Bundle()
                         result.putString(
                             IXUAF.AUTH_REQUEST, ssar.toString()

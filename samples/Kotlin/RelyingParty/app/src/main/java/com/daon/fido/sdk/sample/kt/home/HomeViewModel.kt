@@ -16,6 +16,7 @@ import com.daon.fido.client.sdk.transaction.TransactionUtils
 import com.daon.fido.sdk.sample.kt.BaseViewModel
 import com.daon.fido.sdk.sample.kt.R
 import com.daon.fido.sdk.sample.kt.model.FINGERPRINT_AUTH_AAID
+import com.daon.fido.sdk.sample.kt.model.SingleShotPolicy
 import com.daon.sdk.authenticator.controller.FingerprintCaptureControllerProtocol
 import com.daon.sdk.authenticator.controller.PasscodeControllerProtocol
 import com.daon.sdk.authenticator.exception.ControllerInitializationException
@@ -62,6 +63,9 @@ class HomeViewModel @Inject constructor(application: Application, private val fi
     private var _inProgress = MutableStateFlow(false)
     val inProgress = _inProgress.asStateFlow()
 
+    private val _singleShotPolicy = MutableStateFlow(SingleShotPolicy.ALL_REGISTERED)
+    val singleShotPolicy = _singleShotPolicy.asStateFlow()
+
     private var sessionId: String = ""
 
     // Called when the ViewModel is created
@@ -103,6 +107,7 @@ class HomeViewModel @Inject constructor(application: Application, private val fi
 
     // Authenticate the user
     fun authenticate(isSingleShot: Boolean) {
+        val selectedPolicy = _singleShotPolicy.value
         _inProgress.value = true
         viewModelScope.launch(Dispatchers.Default) {
             val bundle = Bundle()
@@ -114,6 +119,7 @@ class HomeViewModel @Inject constructor(application: Application, private val fi
                 bundle.putBoolean(IXUAF.SINGLE_SHOT, true)
                 //Creating SSAR in the comm layer needs APP_ID
                 bundle.putString(IXUAF.APP_ID, fido.getAppID())
+                bundle.putString(SingleShotPolicy.PARAMETER_KEY, selectedPolicy.name)
             }
             //sample code to demonstrate an image shown as transaction confirmation content
             //bundle.putString(IXUAF.TRANSACTION_CONTENT_TYPE, "image/png")
@@ -142,6 +148,12 @@ class HomeViewModel @Inject constructor(application: Application, private val fi
                     }
                 }
             }
+        }
+    }
+
+    fun selectSingleShotPolicy(policy: SingleShotPolicy) {
+        if (!_inProgress.value) {
+            _singleShotPolicy.value = policy
         }
     }
 
